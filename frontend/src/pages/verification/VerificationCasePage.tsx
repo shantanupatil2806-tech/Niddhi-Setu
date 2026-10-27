@@ -55,11 +55,32 @@ export const VerificationCasePage: React.FC = () => {
         if (c.notes) setNotes(c.notes);
         if (c.officerDecision) setDecision(c.officerDecision as any);
 
-        const fdrId = typeof c.fdrId === 'object' ? (c.fdrId as any).id : c.fdrId;
-        const [fdrData, findingsData] = await Promise.all([
-          fdrsApi.getFDRById(fdrId || 'fdr-002'),
-          fdrsApi.getFDRFindings(fdrId || 'fdr-002'),
-        ]);
+        const realFdrId =
+          typeof c.fdrId === 'object' && c.fdrId !== null
+            ? ((c.fdrId as any)._id || (c.fdrId as any).id)
+            : c.fdrId;
+
+        let fdrData: FDR | null = null;
+        if (typeof c.fdrId === 'object' && c.fdrId !== null && (c.fdrId as any).refNumber) {
+          fdrData = {
+            ...c.fdrId,
+            id: realFdrId || 'fdr-item',
+          };
+        } else if (realFdrId) {
+          fdrData = await fdrsApi.getFDRById(realFdrId);
+        }
+
+        let findingsData: VerificationFinding[] = [];
+        if (Array.isArray(c.findings) && c.findings.length > 0) {
+          findingsData = c.findings;
+        } else if (realFdrId) {
+          try {
+            findingsData = await fdrsApi.getFDRFindings(realFdrId);
+          } catch (e) {
+            console.error('Error fetching findings:', e);
+          }
+        }
+
         setFdr(fdrData);
         setFindings(findingsData);
       } catch (err) {

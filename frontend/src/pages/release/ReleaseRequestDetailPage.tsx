@@ -51,8 +51,21 @@ export const ReleaseRequestDetailPage: React.FC = () => {
         const reqData = await releasesApi.getReleaseRequestById(id);
         setRequest(reqData);
 
-        const fdrId = typeof reqData.fdrId === 'object' ? (reqData.fdrId as any).id : reqData.fdrId;
-        const fdrData = await fdrsApi.getFDRById(fdrId || 'fdr-008');
+        const realFdrId =
+          typeof reqData.fdrId === 'object' && reqData.fdrId !== null
+            ? ((reqData.fdrId as any)._id || (reqData.fdrId as any).id)
+            : reqData.fdrId;
+
+        let fdrData: FDR | null = null;
+        if (typeof reqData.fdrId === 'object' && reqData.fdrId !== null && (reqData.fdrId as any).refNumber) {
+          fdrData = {
+            ...reqData.fdrId,
+            id: realFdrId || 'fdr-item',
+          };
+        } else if (realFdrId) {
+          fdrData = await fdrsApi.getFDRById(realFdrId);
+        }
+
         setFdr(fdrData);
       } catch (err) {
         console.error(err);
