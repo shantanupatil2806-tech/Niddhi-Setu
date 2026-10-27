@@ -39,28 +39,28 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   const sizes = {
-    sm: 'text-[10px] px-2 py-0.5 gap-1.5 font-medium tracking-wide',
+    sm: 'text-[11px] px-2.5 py-0.5 gap-1.5 font-medium tracking-tight',
     md: 'text-xs px-2.5 py-1 gap-1.5 font-medium tracking-tight',
   };
 
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full ring-1 ring-inset leading-none select-none',
+        'inline-flex items-center justify-center rounded-full ring-1 ring-inset leading-normal select-none whitespace-nowrap shrink-0',
         variants[variant],
         sizes[size],
         className
       )}
     >
       {dot && (
-        <span className="relative flex h-1.5 w-1.5">
+        <span className="relative flex h-1.5 w-1.5 shrink-0">
           {variant === 'success' || variant === 'teal' ? (
             <span className={clsx('animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', dotColors[variant])} />
           ) : null}
           <span className={clsx('relative inline-flex rounded-full h-1.5 w-1.5', dotColors[variant])} />
         </span>
       )}
-      <span>{children}</span>
+      <span className="whitespace-nowrap">{children}</span>
     </span>
   );
 };

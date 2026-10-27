@@ -166,9 +166,9 @@ export const ReleaseRequestsPage: React.FC = () => {
                   <Th>Institution</Th>
                   <Th>Declared Reason / Justification</Th>
                   <Th>FDR Principal</Th>
-                  <Th>Submission Date</Th>
-                  <Th>Application Status</Th>
-                  {isStaff && <Th>Officer Action</Th>}
+                  <Th className="whitespace-nowrap">Submission Date</Th>
+                  <Th className="whitespace-nowrap">Application Status</Th>
+                  {isStaff && <Th className="whitespace-nowrap">Officer Action</Th>}
                 </Tr>
               </Thead>
               <Tbody>
@@ -220,12 +220,12 @@ export const ReleaseRequestsPage: React.FC = () => {
                           {formatCurrency(amount)}
                         </span>
                       </Td>
-                      <Td>
+                      <Td className="whitespace-nowrap">
                         <span className="text-xs text-slate-500">
                           {formatDate(req.createdAt)}
                         </span>
                       </Td>
-                      <Td>
+                      <Td className="whitespace-nowrap">
                         {req.status === 'approved' ? (
                           <Badge variant="success" dot size="sm">
                             Sanctioned (Approved)
@@ -236,12 +236,12 @@ export const ReleaseRequestsPage: React.FC = () => {
                           </Badge>
                         ) : (
                           <Badge variant="warning" dot size="sm">
-                            Pending Council Vote
+                            Pending Review
                           </Badge>
                         )}
                       </Td>
                       {isStaff && (
-                        <Td onClick={(e) => e.stopPropagation()}>
+                        <Td className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           {req.status === 'pending' ? (
                             <div className="flex items-center gap-2">
                               <Button

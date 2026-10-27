@@ -446,16 +446,11 @@ export const VerificationPassportPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Section 5: Audit Chain (chain of hash-linked events with integrity badge) */}
+      {/* Section 5: Regulatory Event Audit Trail */}
       <Card>
         <CardHeader
-          title="5. Cryptographic Audit Chain"
-          subtitle="Every event is cryptographically hashed with its antecedent block for zero-tamper security"
-          action={
-            <Badge variant="success" dot size="md">
-              Audit Chain Intact
-            </Badge>
-          }
+          title="5. Regulatory Event Audit Trail"
+          subtitle="Chronological record of official scrutiny events and regulatory decisions"
         />
         <CardContent className="p-0">
           <Table>
