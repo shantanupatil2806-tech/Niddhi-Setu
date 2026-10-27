@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -22,6 +22,7 @@ import {
 import { clsx } from 'clsx';
 import { useAuth } from '../../hooks/useAuth';
 import { ROLE_LABELS } from '../../utils/constants';
+import { verificationApi } from '../../api/verification';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -45,6 +46,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
   const { user, logout, role } = useAuth();
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [queueCount, setQueueCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (role === 'officer' || role === 'admin') {
+      verificationApi
+        .getQueue({ limit: 1 })
+        .then((res) => setQueueCount(res.total))
+        .catch(() => setQueueCount(null));
+    }
+  }, [role, location.pathname]);
 
   const navGroups: NavGroup[] = [
     {
@@ -71,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
           path: '/verification',
           icon: ClipboardCheck,
           roles: ['officer', 'admin'],
-          badge: 3,
+          badge: queueCount !== null && queueCount > 0 ? queueCount : undefined,
         },
       ],
     },
