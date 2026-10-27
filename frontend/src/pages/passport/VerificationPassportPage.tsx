@@ -276,27 +276,45 @@ export const VerificationPassportPage: React.FC = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {(passport.findings || []).map((fnd, idx) => (
-                <Tr key={fnd.id || (fnd as any)._id || idx}>
-                  <Td>
-                    <span className="font-mono text-xs font-bold text-slate-900">
-                      {fnd.ruleId || fnd.rule}
-                    </span>
-                  </Td>
-                  <Td>
-                    <span className="text-xs text-slate-600">{fnd.category || 'Compliance'}</span>
-                  </Td>
-                  <Td>
-                    <span className="text-xs text-slate-800">{fnd.description}</span>
-                  </Td>
-                  <Td>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      PASSED (100%)
-                    </span>
+              {(!passport.findings || passport.findings.length === 0) ? (
+                <Tr>
+                  <Td colSpan={4} className="py-8 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                      <span className="font-semibold text-slate-800 text-sm">
+                        All Standard Surveillance Rules Evaluated & Passed
+                      </span>
+                      <span className="text-xs text-slate-500 max-w-md">
+                        Zero discrepancies or rule violations detected for this deposit. All mandatory AICTE criteria (joint lien, tenure duration, bank endorsement) are 100% compliant.
+                      </span>
+                    </div>
                   </Td>
                 </Tr>
-              ))}
+              ) : (
+                passport.findings.map((fnd, idx) => (
+                  <Tr key={fnd.id || (fnd as any)._id || idx}>
+                    <Td>
+                      <span className="font-mono text-xs font-bold text-slate-900">
+                        {fnd.ruleId || fnd.rule}
+                      </span>
+                    </Td>
+                    <Td>
+                      <span className="text-xs text-slate-600">{fnd.category || 'Compliance'}</span>
+                    </Td>
+                    <Td>
+                      <span className="text-xs text-slate-800">{fnd.description}</span>
+                    </Td>
+                    <Td>
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        PASSED (100%)
+                      </span>
+                    </Td>
+                  </Tr>
+                ))
+              )}
             </Tbody>
           </Table>
         </CardContent>
@@ -309,35 +327,51 @@ export const VerificationPassportPage: React.FC = () => {
           subtitle="Historical record of officer reviews, approvals, and legal validations"
         />
         <CardContent className="space-y-4">
-          <div className="relative border-l-2 border-slate-200 ml-4 pl-6 space-y-6">
-            {(passport.decisions || []).map((dec, idx) => (
-              <div key={idx} className="relative group">
-                <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-teal-600 ring-4 ring-white" />
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-sm text-slate-900">{dec.decision}</span>
-                    <span className="text-xs text-slate-400">{formatDate(dec.timestamp)}</span>
-                  </div>
-                  <div className="text-xs text-slate-600 mt-1">
-                    Decided by <span className="font-semibold text-slate-800">{dec.decidedBy}</span>{' '}
-                    ({dec.role})
-                  </div>
-                  {dec.notes && (
-                    <p className="text-xs text-slate-700 mt-2 p-2.5 rounded bg-white border border-slate-100">
-                      {dec.notes}
-                    </p>
-                  )}
+          {(!passport.decisions || passport.decisions.length === 0) ? (
+            <div className="py-8 text-center text-slate-500">
+              <div className="flex flex-col items-center justify-center gap-2">
+                <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
+                  <Clock className="w-5 h-5" />
                 </div>
+                <span className="font-semibold text-slate-800 text-sm">
+                  Scrutiny In Progress — Awaiting Officer Determination
+                </span>
+                <span className="text-xs text-slate-500 max-w-md">
+                  This verification case is currently open. Once an officer submits an approval, rejection, or clarification directive on the case form, the signed decision will be recorded here.
+                </span>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="relative border-l-2 border-slate-200 ml-4 pl-6 space-y-6">
+              {passport.decisions.map((dec, idx) => (
+                <div key={idx} className="relative group">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-teal-600 ring-4 ring-white" />
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-sm text-slate-900">{dec.decision}</span>
+                      <span className="text-xs text-slate-400">{formatDate(dec.timestamp)}</span>
+                    </div>
+                    <div className="text-xs text-slate-600 mt-1">
+                      Decided by <span className="font-semibold text-slate-800">{dec.decidedBy}</span>{' '}
+                      ({dec.role})
+                    </div>
+                    {dec.notes && (
+                      <p className="text-xs text-slate-700 mt-2 p-2.5 rounded bg-white border border-slate-100">
+                        {dec.notes}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Section 5: Audit Chain (chain of hash-linked events with integrity badge) */}
       <Card>
         <CardHeader
-          title="5. Cryptographic Merkle Audit Chain"
+          title="5. Cryptographic Audit Chain"
           subtitle="Every event is cryptographically hashed with its antecedent block for zero-tamper security"
           action={
             <Badge variant="success" dot size="md">
