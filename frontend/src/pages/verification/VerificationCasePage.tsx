@@ -147,6 +147,15 @@ export const VerificationCasePage: React.FC = () => {
           <Badge variant="info" dot>
             {verCase.status.replace(/_/g, ' ')}
           </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/passport/${verCase.id}`)}
+            leftIcon={<ShieldCheck className="w-4 h-4 text-teal-600" />}
+            className="ml-2 bg-white hover:bg-teal-50 hover:border-teal-300"
+          >
+            View Verification Passport
+          </Button>
         </div>
       </div>
 
