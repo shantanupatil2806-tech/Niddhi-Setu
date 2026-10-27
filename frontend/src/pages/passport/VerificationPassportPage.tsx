@@ -12,6 +12,8 @@ import {
   RefreshCw,
   Building2,
   Lock,
+  ChevronDown,
+  FileText,
 } from 'lucide-react';
 import {
   Card,
@@ -29,6 +31,7 @@ import {
   Modal,
 } from '../../components/ui';
 import { passportApi, IntegrityCheckResult } from '../../api/passport';
+import { verificationApi } from '../../api/verification';
 import { VerificationPassport } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
@@ -43,6 +46,34 @@ export const VerificationPassportPage: React.FC = () => {
   const [checkingIntegrity, setCheckingIntegrity] = useState(false);
   const [integrityResult, setIntegrityResult] = useState<IntegrityCheckResult | null>(null);
   const [showIntegrityModal, setShowIntegrityModal] = useState(false);
+  const [casesList, setCasesList] = useState<Array<{ id: string; label: string }>>([]);
+
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const queueRes = await verificationApi.getQueue({ status: 'all', limit: 100 });
+        const items = queueRes.items || [];
+        const formatted = items.map((c: any) => {
+          const fdrRef = typeof c.fdrId === 'object' ? c.fdrId?.refNumber : (c.fdr?.refNumber || 'FDR');
+          const bank = typeof c.fdrId === 'object' ? c.fdrId?.bankName : (c.fdr?.bankName || '');
+          const instName =
+            typeof c.fdrId === 'object' && typeof c.fdrId?.institutionId === 'object'
+              ? c.fdrId.institutionId.name
+              : (c.institution?.name || '');
+          const statusText = (c.status || 'open').replace(/_/g, ' ').toUpperCase();
+          const label = `${fdrRef}${bank ? ` (${bank})` : ''}${instName ? ` • ${instName}` : ''} [${statusText}]`;
+          return {
+            id: c.id || c._id,
+            label,
+          };
+        });
+        setCasesList(formatted);
+      } catch (err) {
+        console.error('Failed to load cases queue for passport dropdown:', err);
+      }
+    };
+    fetchCases();
+  }, []);
 
   useEffect(() => {
     const fetchPassport = async () => {
@@ -95,19 +126,66 @@ export const VerificationPassportPage: React.FC = () => {
       ? (passport.caseId as any)._id || 'AICTE-CASE-TOKEN'
       : String(passport.caseId || 'AICTE-CASE-TOKEN');
 
+  const currentCaseId =
+    typeof passport.caseId === 'object'
+      ? (passport.caseId as any)._id
+      : passport.caseId || caseId || '';
+
+  const optionsWithCurrent = [...casesList];
+  if (currentCaseId && !optionsWithCurrent.some((o) => o.id === currentCaseId)) {
+    optionsWithCurrent.unshift({
+      id: String(currentCaseId),
+      label: `${fdrRef} — Current Case`,
+    });
+  }
+
   const submittedMeta = passport.submittedMetadata || {};
 
   return (
     <div className="space-y-6">
-      {/* Back button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate('/fdrs')}
-        leftIcon={<ArrowLeft className="w-4 h-4" />}
-      >
-        Back to FDR Register
-      </Button>
+      {/* Top Bar: Back Button & Case Dropdown Selector */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/verification')}
+            leftIcon={<ArrowLeft className="w-4 h-4" />}
+          >
+            Back to Queue
+          </Button>
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+            <FileText className="w-4 h-4 text-teal-600" />
+            <span>Select Verification Case:</span>
+          </div>
+        </div>
+
+        {/* Dropdown Selector */}
+        <div className="relative min-w-[280px] sm:min-w-[420px]">
+          <select
+            id="passport-case-dropdown"
+            value={String(currentCaseId)}
+            onChange={(e) => {
+              if (e.target.value) {
+                navigate(`/passport/${e.target.value}`);
+              }
+            }}
+            className="w-full rounded-xl border border-slate-300 bg-slate-50 hover:bg-white focus:bg-white px-3.5 py-2.5 pr-9 text-xs font-semibold text-slate-800 shadow-xs focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer appearance-none transition-all"
+          >
+            {optionsWithCurrent.length === 0 ? (
+              <option value="">Loading verification requests...</option>
+            ) : (
+              optionsWithCurrent.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))
+            )}
+          </select>
+          <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+      </div>
 
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-navy-950 via-navy-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
