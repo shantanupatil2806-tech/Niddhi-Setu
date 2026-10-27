@@ -295,8 +295,7 @@ export const RenewalCalendarPage: React.FC = () => {
               {Array.from({ length: daysInMonth }).map((_, idx) => {
                 const dayNum = idx + 1;
                 const dayFdrs = getFdrsForDay(dayNum);
-                const isToday =
-                  dayNum === 24 && month === 9 && year === 2026; // Staging date context
+                const isToday = isCurrentMonth && dayNum === now.getDate();
 
                 return (
                   <div
@@ -324,30 +323,33 @@ export const RenewalCalendarPage: React.FC = () => {
 
                     {/* FDR Events */}
                     <div className="mt-2 space-y-1">
-                      {dayFdrs.map((fdr) => (
-                        <div
-                          key={fdr.id}
-                          onClick={() => navigate(`/fdrs/${fdr.id}`)}
-                          className={`p-1.5 rounded-lg border text-[11px] cursor-pointer truncate transition-transform hover:scale-[1.02] shadow-2xs font-medium ${getFdrColor(
-                            fdr
-                          )}`}
-                          title={`${fdr.refNumber} (${fdr.bankName}) - ${formatCurrency(fdr.amount)} ${
-                            fdr.status === 'released' ? '[RELEASED / DISCHARGED]' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="font-bold truncate">{fdr.refNumber}</span>
-                            {fdr.status === 'released' && (
-                              <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-semibold shrink-0">
-                                Released
-                              </span>
-                            )}
+                      {dayFdrs.map((fdr) => {
+                        const fdrId = (fdr as any)._id || fdr.id;
+                        return (
+                          <div
+                            key={fdrId}
+                            onClick={() => navigate(`/fdrs/${fdrId}`)}
+                            className={`p-1.5 rounded-lg border text-[11px] cursor-pointer truncate transition-transform hover:scale-[1.02] shadow-2xs font-medium ${getFdrColor(
+                              fdr
+                            )}`}
+                            title={`${fdr.refNumber} (${fdr.bankName}) - ${formatCurrency(fdr.amount)} ${
+                              fdr.status === 'released' ? '[RELEASED / DISCHARGED]' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold truncate">{fdr.refNumber}</span>
+                              {fdr.status === 'released' && (
+                                <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-semibold shrink-0">
+                                  Released
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] opacity-90 truncate">
+                              {formatCurrency(fdr.amount)}
+                            </div>
                           </div>
-                          <div className="text-[10px] opacity-90 truncate">
-                            {formatCurrency(fdr.amount)}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -374,6 +376,7 @@ export const RenewalCalendarPage: React.FC = () => {
               </Thead>
               <Tbody>
                 {displayedListFdrs.map((fdr) => {
+                  const fdrId = (fdr as any)._id || fdr.id;
                   const days = getDaysToMaturity(fdr.maturityDate);
                   const instName =
                     typeof fdr.institutionId === 'object'
@@ -382,9 +385,9 @@ export const RenewalCalendarPage: React.FC = () => {
 
                   return (
                     <Tr
-                      key={fdr.id}
+                      key={fdrId}
                       isClickable
-                      onClick={() => navigate(`/fdrs/${fdr.id}`)}
+                      onClick={() => navigate(`/fdrs/${fdrId}`)}
                     >
                       <Td>
                         <span className="font-bold text-xs text-slate-900 font-mono">
