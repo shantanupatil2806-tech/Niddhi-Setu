@@ -1,356 +1,293 @@
-# Niddhi Setu — AICTE Security Deposit & FDR Regulatory Platform
+<div align="center">
 
-> **SIH Prototype** for AICTE Security Deposit/FDR Management (AICTE Problem Statement)
+# 🏛️ Niddhi Setu (निधि सेतु)
+### AICTE Security Deposit & Fixed Deposit Receipt (FDR) Regulatory Management Platform
 
-A centralized platform for managing institution-wise Fixed Deposit Receipts (FDRs) maintained as security deposits with AICTE. Covers the complete FDR lifecycle — from initial submission and verification, through active regulatory custody, to release and encashment clearance at course completion. Available as a **web portal** (for AICTE officers and administrators) and a **mobile companion app** (for technical institutions).
+[![AICTE Platform](https://img.shields.io/badge/AICTE-Regulatory%20Portal-0d9488?style=for-the-badge&logo=shield&logoColor=white)](https://aicte-india.org)
+[![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js_18-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Expo](https://img.shields.io/badge/Expo_SDK_58-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+
+<p align="center">
+  <b>A unified, tamper-evident regulatory platform tracking institutional Security Deposits and Fixed Deposit Receipts (FDRs) from initial submission, automated compliance verification, and joint lien custody to final release and encashment clearance upon course tenure completion.</b>
+</p>
+
+[✨ Key Features](#-key-features) • [🏛️ Architecture](#-system-architecture) • [🔄 Regulatory Lifecycle](#-fdr-regulatory-lifecycle) • [🚀 Quick Start](#-quick-start) • [📱 Mobile App](#-mobile-companion-app) • [🔑 Demo Credentials](#-demo-credentials) • [📚 API Guide](#-api-specification)
+
+</div>
 
 ---
 
-## Architecture
+## 📌 Problem & Executive Summary
+
+Technical education institutions affiliated with the **All India Council for Technical Education (AICTE)** must deposit Fixed Deposit Receipts (FDRs) as statutory security guarantees during institutional establishment and program approvals. 
+
+Traditionally, managing tens of thousands of paper-based certificates across hundreds of scheduled banks introduces:
+- **Tenure Gaps & Untracked Renewals**: Overlooked maturities and rollover failures.
+- **Verification Bottlenecks**: Heavy manual scrutiny required for bank branch endorsements and lien clauses.
+- **Disjointed Exit Clearance**: Delayed NOC and lien release when an academic program concludes.
+
+**Niddhi Setu** bridges this governance gap by offering an integrated **Web Scrutiny Console** for AICTE regulators and a dedicated **Pocket Mobile Companion** for affiliated institutions.
+
+---
+
+## 🏛️ System Architecture
 
 ```
-fdr-sentinel/
-├── backend/          # Express.js REST API (port 5000)
-├── frontend/         # React + Vite web portal (port 5173)
-├── mobile/           # React Native / Expo mobile app (institution-facing)
+Niddhi-Setu/
+├── backend/          # Express.js REST API & Compliance Engine (Port 5000)
+├── frontend/         # React + Vite + TypeScript Web Scrutiny Portal (Port 5173)
+├── mobile/           # React Native / Expo Mobile App for Technical Institutions
 └── README.md
 ```
 
-**Who uses what:**
+### 👥 Role & Channel Segregation
 
-| Platform | Users |
-|----------|-------|
-| Web Portal | AICTE Officers, Administrators |
-| Web Portal | Institutions (limited — submit FDRs, view status) |
-| Mobile App | Institutions only |
+| Channel | Intended Audience | Key Responsibilities |
+| :--- | :--- | :--- |
+| **Web Portal** | AICTE Officers & Administrators | National dashboard, automated verification queue, instrument relationship graphing, compliance radar, encashment sanctioning, and audit logging. |
+| **Web Portal** *(Limited)* | Technical Institutions | Desk submission of bulk deposits, renewal documentation, and statutory reporting. |
+| **Mobile App** | Technical Institutions *(Registrars / Finance)* | Direct phone camera certificate scanning, real-time maturity countdowns, instant scrutiny notifications, and 1-tap release clearance requests. |
 
 ---
 
-## FDR Lifecycle
+## 🔄 FDR Regulatory Lifecycle
 
+```mermaid
+flowchart TD
+    A([🏛️ Institution Submits FDR]) -->|Camera Scan / PDF Upload| B[🔍 Automated Rule Engine Scrutiny]
+    B --> C{Passes Compliance?}
+    C -->|Flagged Anomalies| D[⚠️ Clarification Request Issued to Institute]
+    D -->|Resubmission| B
+    C -->|Clean Instrument| E[📋 AICTE Officer Verification Queue]
+    E -->|Officer Approves| F[🔒 Active Joint Regulatory Custody]
+    F -->|Approaching 30/60 Days| G[⏰ Automated Maturity Alerts]
+    G -->|Institute Renews| B
+    F -->|Course Tenure Concluded| H[📝 Institution Submits Release Application]
+    H --> I[⚖️ FDR Release & Encashment Clearance Desk]
+    I -->|Officer Approves| J([✅ Lien Discharged & Encashment NOC Issued])
 ```
-Institution submits FDR
-        ↓
-Verification Queue (Officer reviews new FDRs)
-        ↓
-Active (FDR in regulatory custody)
-        ↓
-Institution applies for Release (end of course tenure)
-        ↓
-FDR Release & Encashment Clearance (Officer approves / rejects)
-        ↓
-Released (lien discharged, NOC issued)
-```
 
-> **Note:** The Verification Queue handles *new* FDRs entering custody.  
-> The Release & Encashment section handles *existing* FDRs at end of tenure — these are two distinct workflows.
+> [!IMPORTANT]
+> **Distinct Lifecycle Streams**: The **Verification Queue** evaluates *new* incoming deposits entering custody. The **Release & Encashment Desk** manages *concluding* deposits at the end of their multi-year academic tenure.
 
 ---
 
-## Prerequisites
+## ✨ Key Features
 
-- Node.js v18+ and npm
-- MongoDB (local instance at `mongodb://localhost:27017` or Atlas URI)
-- Git
-- For mobile: **Expo Go** app installed on your Android/iOS phone (Expo SDK 58)
+### 1. 🔍 Automated Scrutiny & Rule Engine
+- **Deterministic Rule Base (`RULE_001` - `RULE_009`)**: Validates mandatory joint name mandates (`AICTE & Institution`), minimum tenure periods, authorized scheduled bank codes, and interest rollover directives.
+- **Compliance Radar**: Real-time 6-axis compliance score (starts at 100 with weighted deductions for critical, high, and medium anomalies).
+
+### 2. 🕸️ Instrument Relationship Graph (`/graph`)
+- Interactive canvas rendering institution-to-deposit hierarchies:
+  - 🟣 **Institutions** → 🔵 **FDR Instruments** → 🟢 **Renewals** → 🟡 **Verification Cases** → 🟢 **Clearance Actions**.
+  - Built-in topological detection flags suspicious circular references, cross-institutional duplicate deposit numbers, and orphaned renewals.
+
+### 3. ⏳ Temporal Lineage Explorer (`/lineage`)
+- Chronological timeline tracking predecessor-to-successor transitions over multi-decade lifecycles.
+- Automatically flags tenure gaps, amount regressions, and unauthorized bank migrations between roll-overs.
+
+### 4. 🔏 Sealed Verification Passport (`/passport/:caseId`)
+- Tamper-evident evidence packet binding original document fingerprints, extracted data points, officer timestamps, and decisions into an immutable, append-only event log.
+
+### 5. 📱 Institutional Mobile Companion
+- Instant physical deposit capture using mobile camera with edge cropping.
+- Push-synchronized notifications for scrutiny requests, maturity countdowns, and clearance approvals.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
-### 1. Clone and install
+### 📋 Prerequisites
+- **Node.js** v18+ & **npm**
+- **MongoDB** (local at `mongodb://localhost:27017` or MongoDB Atlas URI)
+- **Expo Go** app on your iOS or Android phone (SDK 58)
+
+---
+
+### Step 1: Clone & Install Dependencies
 
 ```bash
-# Backend
-cd fdr-sentinel/backend
-npm install
+# Clone the repository
+git clone https://github.com/shantanupatil2806-tech/Niddhi-Setu.git
+cd Niddhi-Setu
 
-# Frontend
-cd ../frontend
-npm install
+# Install Backend dependencies
+cd backend && npm install
 
-# Mobile app
-cd ../mobile
-npm install
+# Install Frontend dependencies
+cd ../frontend && npm install
+
+# Install Mobile dependencies
+cd ../mobile && npm install
 ```
 
-### 2. Configure environment
+---
 
+### Step 2: Configure Environment
+
+Create `.env` inside `backend/`:
 ```bash
-# Backend — copy example and edit if needed
+cd ../backend
 cp .env.example .env
 ```
+*(Default settings point to `mongodb://localhost:27017/fdr-sentinel` and port `5000`)*
 
-The default `.env` works with a local MongoDB instance on port 27017.
+---
 
-### 3. Seed demo data
+### Step 3: Seed Synthetic Demo Data
 
+Populate the database with test institutions, active deposits, compliance cases, and audit histories:
 ```bash
-cd fdr-sentinel/backend
 npm run seed
 ```
 
-This creates:
-- 3 institutions (IIT Delhi, NIT Trichy, BITS Pilani)
-- 6 users across all roles
-- 15 FDR instruments with varied statuses and multi-level lineages
-- Verification cases, findings, passports, and chained audit events
+---
 
-### 4. Start the web platform
+### Step 4: Run Web Portal & API Services
 
 ```bash
-# Terminal 1 — Backend API (port 5000)
-cd fdr-sentinel/backend
+# Terminal 1 — Backend API Service
+cd backend
 npm run dev
 
-# Terminal 2 — Frontend web portal (port 5173)
-cd fdr-sentinel/frontend
+# Terminal 2 — Frontend Web Portal
+cd frontend
 npm run dev
 ```
 
-Open: **http://localhost:5173**
+🌐 **Web Scrutiny Portal**: [http://localhost:5173](http://localhost:5173)  
+🔌 **Backend Health Gateway**: [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
-### 5. Start the mobile app
+---
 
-> **Requirement:** Expo Go (SDK 58) installed on your phone. Phone and PC must be on the same Wi-Fi network.
+### Step 5: Launch Mobile App on Physical Device
 
+1. Make sure your smartphone and PC are connected to the **same Wi-Fi network**.
+2. Find your local Wi-Fi IPv4 address (`ipconfig` on Windows or `ifconfig` on macOS/Linux).
+3. Ensure `mobile/src/api/client.ts` points to your machine's IP (e.g. `http://192.168.1.35:5000/api`).
+4. Start the Expo bundler:
 ```bash
-cd fdr-sentinel/mobile
+cd mobile
 npm start
 ```
-
-- Scan the QR code in the terminal using the **Expo Go** app on your phone.
-- Before starting, open `mobile/src/api/client.ts` and set `BASE_URL` to your PC's local Wi-Fi IP address (e.g., `http://192.168.1.35:5000/api`).
-
-The backend must be started with network binding (`0.0.0.0`) — this is already configured in `backend/server.js`.
+5. Scan the QR code using the **Expo Go** application on your phone.
 
 ---
 
-## Demo Credentials
+## 🔑 Demo Credentials
 
-| Role | Email | Password |
-|------|-------|----------|
-| Administrator | `admin@fdrsentinel.gov.in` | `Admin@123` |
-| Regulation Officer 1 | `officer.sharma@fdrsentinel.gov.in` | `Officer@123` |
-| Regulation Officer 2 | `officer.verma@fdrsentinel.gov.in` | `Officer@123` |
-| IIT Delhi (Institution) | `registrar@iitd.ac.in` | `Inst@123` |
-| NIT Trichy (Institution) | `registrar@nitt.edu` | `Inst@123` |
-| BITS Pilani (Institution) | `finance@bits-pilani.ac.in` | `Inst@123` |
+| Role | Organization / Department | Login Email | Password |
+| :--- | :--- | :--- | :--- |
+| **System Administrator** | AICTE HQ New Delhi | `admin@fdrsentinel.gov.in` | `Admin@123` |
+| **Regulation Officer 1** | Bureau of Approval | `officer.sharma@fdrsentinel.gov.in` | `Officer@123` |
+| **Regulation Officer 2** | Finance & Scrutiny | `officer.verma@fdrsentinel.gov.in` | `Officer@123` |
+| **Institute Registrar** | IIT Delhi | `registrar@iitd.ac.in` | `Inst@123` |
+| **Institute Registrar** | NIT Trichy | `registrar@nitt.edu` | `Inst@123` |
+| **Institute Finance Lead** | BITS Pilani | `finance@bits-pilani.ac.in` | `Inst@123` |
 
----
-
-## Application Pages
-
-| # | Page | Route | Access |
-|---|------|--------|--------|
-| 1 | Login | `/login` | Public |
-| 2 | Overview Dashboard | `/dashboard` | All |
-| 3 | Institution Registry | `/institutions` | Officer, Admin |
-| 4 | Institution Details | `/institutions/:id` | Officer, Admin |
-| 5 | FDR Register | `/fdrs` | All |
-| 6 | FDR Details | `/fdrs/:id` | All (own inst.) |
-| 7 | New FDR Submission | `/fdrs/new` | Institution |
-| 8 | Verification Queue | `/verification` | Officer, Admin |
-| 9 | Verification Case | `/verification/:caseId` | Officer, Admin |
-| 10 | Instrument Relationship Graph | `/graph` | All |
-| 11 | Temporal Lineage Explorer | `/lineage` | All |
-| 12 | Verification Passport | `/passport/:caseId` | Officer, Admin |
-| 13 | Compliance Overview | `/compliance` | All |
-| 14 | Renewal & Maturity Calendar | `/calendar` | All |
-| 15 | Release & Encashment Clearance | `/release` | All |
-| 16 | Reports | `/reports` | Officer, Admin |
-| 17 | Administration | `/admin` | Admin |
+*(The Mobile and Web login screens feature 1-tap quick presets for instant evaluation).*
 
 ---
 
-## Key Features
+## 📱 Mobile Companion App
 
-### A. Instrument Relationship Graph (`/graph`)
-- Visual canvas showing the relationships between institutions, FDRs, renewals, verification cases, and release applications
-- Node types: institution (purple), fdr (blue), renewal (teal), case (amber), release (green)
-- Click any node to drill into details
-- Flags suspicious patterns: duplicate references, broken lineages, circular links
+<div align="center">
 
-### B. Temporal Lineage Verification (`/lineage`)
-- Timeline of the complete predecessor → successor chain for any FDR
-- Automated checks: invalid date sequences, amount regression, coverage gaps, bank migrations
-- Each check produces a finding with: rule ID, severity, evidence field, suggested action
-- Separate columns for verified facts vs flagged patterns
+| Screen | Focus & Functionality |
+| :--- | :--- |
+| **Dashboard (Home)** | Institutional deposit aggregate sum, active guarantees, and pending scrutiny counter. |
+| **Deposit Register (FDRs)** | Pocket dossier of all deposits, bank branch codes, and maturity countdowns. |
+| **Deposit Intake (Upload)** | Camera scanner and document picker with immediate validation submission. |
+| **Regulatory Alerts** | Scrutiny remarks, 30-day maturity notices, and sanction decisions. |
+| **Profile** | Affiliation credentials, nodal officer identity, and secure session management. |
 
-### C. Verification Passport (`/passport/:caseId`)
-- Sealed evidence record per verification case
-- Sections: submitted metadata, extracted fields, all compliance rule results, officer decisions, and a linked audit chain
-- Corrections recorded as new events, not overwrites — full history preserved
-
-### D. Compliance Overview (`/compliance`)
-- Rules-based compliance engine (RULE_001 to RULE_009)
-- Radar chart with 6 axes: Date Validity, Document Integrity, Lineage Completeness, Reference Uniqueness, Amount Consistency, Maturity Status
-- Every finding shows: rule ID, category, exact evidence field, severity, suggested action, whether officer review is required
-- Compliance score: starts at 100, deducts 30/15/10/5 per critical/high/medium/low finding
+</div>
 
 ---
 
-## API Overview
+## 📚 API Specification
 
-```
-POST   /api/auth/login
-GET    /api/auth/me
+<details>
+<summary><b>Click to expand full REST API endpoint directory</b></summary>
 
-GET    /api/dashboard/summary
-GET    /api/dashboard/maturity-trend
-GET    /api/dashboard/recent-activity
+```http
+### Authentication
+POST   /api/auth/login                  # JWT issuance with role identification
+GET    /api/auth/me                     # Current authenticated profile
+
+### Executive Overview
+GET    /api/dashboard/summary           # Total deposits, active value, pending verifications
+GET    /api/dashboard/maturity-trend    # Temporal timeline of incoming maturities
+GET    /api/dashboard/recent-activity   # Live stream of council actions
 GET    /api/dashboard/compliance-distribution
 
-GET    /api/institutions
-POST   /api/institutions
-GET    /api/institutions/:id
-PATCH  /api/institutions/:id
-GET    /api/institutions/:id/fdrs
+### Institution Management
+GET    /api/institutions                # Filterable list of affiliated technical colleges
+POST   /api/institutions                # Onboard new academic institution
+GET    /api/institutions/:id            # Institute profile & authorized trustees
+PATCH  /api/institutions/:id            # Update accreditation / trust metadata
+GET    /api/institutions/:id/fdrs       # Complete FDR catalog for given institute
 
-GET    /api/fdrs                    # paginated, filterable
-POST   /api/fdrs                    # multipart/form-data
-GET    /api/fdrs/:id
-PATCH  /api/fdrs/:id/status
-GET    /api/fdrs/:id/lineage
-GET    /api/fdrs/:id/findings
+### FDR Master Register
+GET    /api/fdrs                        # Paginated deposit register (search by ref, bank, tenure)
+POST   /api/fdrs                        # Submit new FDR certificate (multipart document upload)
+GET    /api/fdrs/:id                    # Comprehensive dossier for single deposit
+PATCH  /api/fdrs/:id/status             # Transition status (Active / Matured / Encashment)
+GET    /api/fdrs/:id/lineage            # Predecessor & renewal chain tree
+GET    /api/fdrs/:id/findings           # Compliance rule audit breakdown
 
-GET    /api/verification/queue
-GET    /api/verification/cases/:id
-PATCH  /api/verification/cases/:id/decision
-POST   /api/verification/cases/:id/findings
+### Verification Queue
+GET    /api/verification/queue          # Unverified instruments pending officer review
+GET    /api/verification/cases/:id      # Detailed scrutiny case packet
+PATCH  /api/verification/cases/:id/decision # Officer decision: Approve, Reject, Seek Clarification
+POST   /api/verification/cases/:id/findings # Attach manual inspection notes
 
-GET    /api/passport/:caseId
-GET    /api/passport/:caseId/integrity
+### Evidence Passport & Graph
+GET    /api/passport/:caseId            # Sealed verification passport packet
+GET    /api/passport/:caseId/integrity  # Audit log tamper check
+GET    /api/graph/institution/:id       # Visual node tree for institute
+GET    /api/graph/fdr/:id               # Subgraph for specific deposit
 
-GET    /api/graph/institution/:id
-GET    /api/graph/fdr/:id
+### Release & Encashment
+GET    /api/releases                    # Active encashment clearance applications
+POST   /api/releases                    # Institute applies for lien discharge
+GET    /api/releases/:id                # Clearance dossier & inspection history
+PATCH  /api/releases/:id/decision       # Sanction release or reject application
 
-GET    /api/renewals
-POST   /api/renewals
-GET    /api/renewals/:id
-PATCH  /api/renewals/:id/status
+### Mobile Notifications
+GET    /api/notifications               # Institution alert feed (maturities, remarks, approvals)
 
-GET    /api/releases
-POST   /api/releases
-GET    /api/releases/:id
-PATCH  /api/releases/:id/decision
-
-GET    /api/notifications             # institution alerts (mobile app)
-
-GET    /api/reports/export
-GET    /api/reports/admin/users
-POST   /api/reports/admin/users
-PATCH  /api/reports/admin/users/:id
-GET    /api/reports/admin/audit-log
+### Governance & Reports
+GET    /api/reports/export              # Excel/CSV audit export
+GET    /api/reports/admin/audit-log     # Append-only chronological system audit trail
 ```
 
----
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `5000` | Express server port |
-| `MONGODB_URI` | `mongodb://localhost:27017/fdr-sentinel` | MongoDB connection string |
-| `JWT_SECRET` | *(change in production)* | JWT signing secret |
-| `JWT_EXPIRES_IN` | `7d` | JWT expiration |
-| `UPLOAD_DIR` | `./uploads` | Document storage directory |
-| `MAX_FILE_SIZE_MB` | `10` | Max upload file size |
-| `FRONTEND_URL` | `http://localhost:5173` | CORS allowed origin |
-
-### Frontend (`frontend/.env`)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VITE_API_URL` | `http://localhost:5000/api` | Backend API base URL |
+</details>
 
 ---
 
-## Project Structure
+## 🛡️ Security & Privacy Architecture
 
-```
-fdr-sentinel/
-├── backend/
-│   ├── server.js               # Express entry point (listens on 0.0.0.0 for mobile connectivity)
-│   └── src/
-│       ├── config/             # DB, constants
-│       ├── middleware/         # auth, rbac, upload, errorHandler
-│       ├── models/             # 9 Mongoose schemas
-│       ├── routes/             # 11 Express routers (incl. notifications)
-│       ├── services/           # complianceEngine, lineageService, graphService, passportService
-│       ├── tests/              # Jest unit tests
-│       └── utils/              # hash, audit, seed
-├── frontend/
-│   └── src/
-│       ├── api/                # Typed Axios API clients
-│       ├── components/         # Layout + reusable UI components
-│       ├── pages/              # 17 page components
-│       ├── store/              # Zustand auth store
-│       ├── types/              # TypeScript interfaces
-│       └── utils/              # Formatters, constants
-├── mobile/
-│   ├── App.tsx                 # Root — bottom tab navigator (Home, FDRs, Upload, Alerts, Profile)
-│   ├── app.json                # Expo config (SDK 58)
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── .npmrc                  # legacy-peer-deps=true (required for SDK 58 + React 19)
-│   └── src/
-│       ├── api/client.ts       # Axios client — set BASE_URL to your PC's local IP
-│       ├── context/            # AuthContext (JWT auth, quick login presets)
-│       ├── screens/            # LoginScreen, HomeScreen, FDRListScreen, UploadScreen,
-│       │                       # NotificationsScreen, ProfileScreen
-│       └── types/              # TypeScript interfaces
-└── README.md
-```
+- **Role-Based Access Control (RBAC)**: Strict separation of privileges across Admin, Scrutiny Officer, and Institution roles.
+- **Tenant Isolation**: Institutions are cryptographically scoped at the API query level and can never inspect peer institutions' deposits.
+- **Cryptographic Document Fingerprints**: Every certificate upload generates an automated SHA-256 fingerprint for tamper detection.
+- **Append-Only Event Ledger**: Audit events cannot be updated or deleted via API routes.
+- **Transport Security**: Sanitized HTTP headers via Helmet, JWT session signing, and strict rate-limiting per IP.
 
 ---
 
-## Security Notes
+## 📄 Disclaimers
 
-- Passwords hashed with **bcryptjs** (salt rounds = 12)
-- JWT tokens expire in 7 days
-- All API routes require authentication
-- Institution users are **server-side scoped** to their own institution's data
-- File uploads: PDF, JPG, PNG only; max 10MB; stored with UUID filenames
-- Rate limiting: 1000 requests / 15 minutes per IP
-- Helmet security headers enabled
-- Document fingerprints (SHA-256) computed on every uploaded file
-- Audit events are **append-only** — no delete route exposed
+- *This platform is an academic engineering prototype developed for the Smart India Hackathon (SIH) under the AICTE Problem Statement.*
+- *Banking checks demonstrate rule-based heuristics and automated receipt analysis; live bank core API integration requires RBI-approved Open Banking gateway access.*
 
 ---
 
-## Disclaimers
-
-- This is a **research prototype** for SIH demonstration purposes
-- Document verification is **system-generated** — not independent bank confirmation
-- Compliance findings represent rule-based checks, not validated AI predictions
-- No real financial accounts or live bank APIs are connected
-
----
-
-## Running Tests
-
-```bash
-cd fdr-sentinel/backend
-npm test
-```
-
-Tests cover: hash utilities, compliance engine rules, authorization middleware.
-
----
-
-## Production Build
-
-```bash
-# Frontend production build
-cd fdr-sentinel/frontend
-npm run build
-# Output: frontend/dist/
-
-# Backend with PM2
-npm install -g pm2
-cd fdr-sentinel/backend
-pm2 start server.js --name fdr-sentinel-api
-```
+<div align="center">
+  <sub>Developed for AICTE Regulatory Modernization • Smart India Hackathon</sub>
+</div>

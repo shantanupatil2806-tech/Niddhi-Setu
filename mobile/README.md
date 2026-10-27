@@ -1,108 +1,109 @@
-# Niddhi Setu — Institute Mobile Companion App
+<div align="center">
 
-React Native / Expo companion application for technical education institutions (e.g. IIT Delhi, NIT Trichy, BITS Pilani), synchronized in real-time with the **Niddhi Setu AICTE Regulatory Portal**.
+# 📱 Niddhi Setu Mobile Companion
+### Institutional Pocket Portal for AICTE Security Deposits & FDR Guarantees
 
-> **Institution-facing only.** AICTE officers and administrators use the web portal.
+[![React Native](https://img.shields.io/badge/React_Native-Expo_SDK_58-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![AICTE](https://img.shields.io/badge/AICTE-Synchronized-0d9488?style=for-the-badge&logo=shield&logoColor=white)](https://aicte-india.org/)
 
----
+<p align="center">
+  <b>Purpose-built mobile application for Technical Institute Registrars and Finance Officers to scan, submit, track, and release institutional Fixed Deposit Receipts (FDRs) in real time.</b>
+</p>
 
-## Features
+> [!NOTE]
+> **Audience**: This mobile companion is strictly institution-facing. AICTE regulatory officers and administrators use the comprehensive web portal for national scrutiny and audit controls.
 
-1. **Regulatory Alerts & Notifications**
-   - Live alerts synced from the AICTE regulatory desk
-   - Maturity reminders (30-day and 60-day advance notice)
-   - Instant notifications when an officer requests clarifications or approves a release
-
-2. **Camera & File Upload (Deposit Intake)**
-   - Scan physical FDR certificates directly with your phone camera
-   - Upload bank-stamped PDF receipts or image files
-   - Form fields: Reference Number, Scheduled Bank, Branch, Principal Amount, Issue Date, Maturity Date
-   - Submissions instantly appear on the AICTE web portal and enter the verification queue
-
-3. **Live Dashboard**
-   - Total deposit value held in regulatory custody
-   - Active & verified deposit counts, items under review, and upcoming expiries
-
-4. **Pocket FDR Register**
-   - Search and filter all institutional FDR guarantees
-   - View full dossier: bank details, maturity countdown, document reference
-
-5. **Release & Encashment Clearance**
-   - Apply for lien discharge and NOC directly from your phone at end of course tenure
-   - Track status of pending release applications
+</div>
 
 ---
 
-## Prerequisites
+## 🚀 Mobile Capabilities
 
-- **Expo Go** app installed on your Android or iOS phone — **must be SDK 58**
-- Phone and PC on the same Wi-Fi network
-- Backend running on your PC (see below)
+### 1. 📷 Deposit Camera Scanner & Digital Intake
+- Scan physical paper certificates directly using your phone's camera.
+- Upload digitally signed bank receipts or PDF FDR certificates.
+- Automated validation checks for principal amounts, maturity tenure, and joint AICTE liens.
+- Submissions immediately synchronize with the AICTE Web Scrutiny Desk and Verification Queue.
+
+### 2. 🔔 Regulatory Scrutiny & Maturity Alerts
+- Real-time notification feed directly from AICTE approval officers.
+- 30-day and 60-day advance alerts before FDR maturity to prevent deposit lapsing.
+- Immediate alerts when an officer approves, requests clarification, or sanctions deposit encashment.
+
+### 3. 📊 Pocket Institutional Dashboard
+- Real-time aggregate count and value of deposits under AICTE custody.
+- Breakdown of verified instruments, deposits in scrutiny, and overdue rollovers.
+
+### 4. 🗂️ Live Deposit Register & Dossier
+- Search and filter institutional FDRs by bank, reference token, or status.
+- View detailed deposit dossiers: joint ownership terms, branch codes, issue dates, and document checksums.
+
+### 5. 📝 Mobile Lien Release Application
+- Submit lien discharge and encashment applications on completion of approved course tenures directly from mobile.
+- Track real-time progress through the regulatory clearance desk.
 
 ---
 
-## Setup
+## 📱 Navigation Structure
 
-### 1. Set your Wi-Fi IP address
+<div align="center">
 
-Open [`src/api/client.ts`](./src/api/client.ts) and update `BASE_URL` to your PC's local IP address:
+| Tab Icon | Tab Name | Screen Destination | Key Operations |
+| :---: | :--- | :--- | :--- |
+| 🏠 | **Home** | Dashboard | Institutional summary metrics, live deposit value, quick actions |
+| 📁 | **FDRs** | Deposit Register | Searchable catalog, full deposit dossiers, apply for release |
+| 📷 | **Upload** | Intake Scanner | Camera scanner, PDF selector, and submission form |
+| 🔔 | **Alerts** | Regulatory Feed | Push notifications, officer clarification requests, maturity warnings |
+| 👤 | **Profile** | Institute Profile | Institute trust info, nodal officer contact, secure logout |
 
-```ts
-const BASE_URL = 'http://192.168.1.XX:5000/api'; // replace XX with your IP
+</div>
+
+---
+
+## 🛠️ Quick Setup & Device Execution
+
+### Prerequisites
+- **Expo Go App** (SDK 58) installed on your iOS or Android device.
+- Smartphone and computer connected to the **same Wi-Fi network**.
+
+---
+
+### 1. Configure Backend Host
+Open [`src/api/client.ts`](./src/api/client.ts) and set `BASE_URL` to your computer's local Wi-Fi IP address:
+
+```typescript
+// Replace with your development machine's local IPv4
+const BASE_URL = 'http://192.168.1.35:5000/api';
 ```
+*(Find your IP by running `ipconfig` on Windows or `ifconfig` on Linux/macOS).*
 
-To find your PC's IP: run `ipconfig` (Windows) and look for the **IPv4 Address** under your Wi-Fi adapter.
-
-### 2. Start the backend
-
-From `backend/`:
+### 2. Launch Development Bundler
 ```bash
-npm run dev
-```
-
-The backend listens on `0.0.0.0:5000`, making it reachable from your phone on the same network.
-
-### 3. Start the mobile app
-
-From `mobile/`:
-```bash
+# From mobile/ directory
+npm install
 npm start
 ```
 
-- **Physical phone (recommended):** Scan the QR code with the Expo Go app
-- **Android emulator:** Press `a` in the terminal
-- **iOS simulator:** Press `i` in the terminal
-- **Web browser:** Press `w` or run `npm run web`
+### 3. Open on Phone
+- Open **Expo Go** on your physical Android device and scan the displayed terminal QR code.
+- On iOS, open the **Camera** app to scan the QR code and launch in Expo Go.
 
 ---
 
-## Screens
+## 🔑 One-Tap Staging Credentials
 
-| Screen | Tab | Description |
-|--------|-----|-------------|
-| Login | — | Quick-login presets for demo institutions |
-| Home | Home | Dashboard with KPI cards and recent FDR summary |
-| FDR Register | FDRs | Searchable list, dossier modal, release application |
-| Upload | Upload | Camera scanner + PDF picker + submission form |
-| Alerts | Alerts | Live regulatory notifications |
-| Profile | Profile | Account info and sign out |
+The login screen provides 1-tap quick login buttons for instant demo access:
 
----
-
-## Demo Logins (Quick Tap)
-
-| Institution | Email | Password |
-|-------------|-------|----------|
-| IIT Delhi | `registrar@iitd.ac.in` | `Inst@123` |
-| NIT Trichy | `registrar@nitt.edu` | `Inst@123` |
-| BITS Pilani | `finance@bits-pilani.ac.in` | `Inst@123` |
+| Institution | Registered Nodal Email | Password |
+| :--- | :--- | :--- |
+| **IIT Delhi** | `registrar@iitd.ac.in` | `Inst@123` |
+| **NIT Trichy** | `registrar@nitt.edu` | `Inst@123` |
+| **BITS Pilani** | `finance@bits-pilani.ac.in` | `Inst@123` |
 
 ---
 
-## Technical Notes
-
-- **Expo SDK:** 58 (must match Expo Go version on your phone)
-- **React Native:** Managed workflow via Expo
-- **`.npmrc`:** `legacy-peer-deps=true` — required due to React 19 peer dependency conflicts in SDK 58
-- **Auth:** JWT tokens stored in `AsyncStorage`, passed as `Bearer` in all API calls
-- **Navigation:** React Navigation v7 — bottom tab + stack navigators
+<div align="center">
+  <sub>Part of the <b>Niddhi Setu</b> Platform • Ministry of Education & AICTE</sub>
+</div>
