@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const FDR = require('../models/FDR');
 const VerificationCase = require('../models/VerificationCase');
 const RenewalOrReplacement = require('../models/RenewalOrReplacement');
@@ -10,6 +11,13 @@ const VerificationFinding = require('../models/VerificationFinding');
 
 const router = express.Router();
 
+const toObjectId = (id) => {
+  if (!id) return null;
+  if (typeof id === 'object' && id._id) id = id._id;
+  const idStr = String(id);
+  return mongoose.Types.ObjectId.isValid(idStr) ? new mongoose.Types.ObjectId(idStr) : id;
+};
+
 /**
  * GET /api/dashboard/summary
  * Key portfolio metrics and summary counts
@@ -20,10 +28,11 @@ router.get('/summary', auth, async (req, res, next) => {
     const renewalQuery = {};
     const releaseQuery = {};
 
-    if (req.user.role === ROLES.INSTITUTION) {
-      fdrQuery.institutionId = req.user.institutionId;
-      renewalQuery.institutionId = req.user.institutionId;
-      releaseQuery.institutionId = req.user.institutionId;
+    if (req.user.role === ROLES.INSTITUTION && req.user.institutionId) {
+      const instId = toObjectId(req.user.institutionId);
+      fdrQuery.institutionId = instId;
+      renewalQuery.institutionId = instId;
+      releaseQuery.institutionId = instId;
     }
 
     const now = new Date();
@@ -102,8 +111,8 @@ router.get('/maturity-trend', auth, async (req, res, next) => {
       status: { $nin: [FDR_STATUS.MATURED, FDR_STATUS.RELEASED, FDR_STATUS.REJECTED] }
     };
 
-    if (req.user.role === ROLES.INSTITUTION) {
-      fdrQuery.institutionId = req.user.institutionId;
+    if (req.user.role === ROLES.INSTITUTION && req.user.institutionId) {
+      fdrQuery.institutionId = toObjectId(req.user.institutionId);
     }
 
     const now = new Date();
@@ -196,8 +205,8 @@ router.get('/recent-activity', auth, async (req, res, next) => {
 router.get('/compliance-distribution', auth, async (req, res, next) => {
   try {
     const fdrQuery = {};
-    if (req.user.role === ROLES.INSTITUTION) {
-      fdrQuery.institutionId = req.user.institutionId;
+    if (req.user.role === ROLES.INSTITUTION && req.user.institutionId) {
+      fdrQuery.institutionId = toObjectId(req.user.institutionId);
     }
 
     const distribution = await FDR.aggregate([
@@ -251,8 +260,8 @@ router.get('/high-priority', auth, async (req, res, next) => {
       ]
     };
 
-    if (req.user.role === ROLES.INSTITUTION) {
-      fdrQuery.institutionId = req.user.institutionId;
+    if (req.user.role === ROLES.INSTITUTION && req.user.institutionId) {
+      fdrQuery.institutionId = toObjectId(req.user.institutionId);
     }
 
     const cases = await FDR.find(fdrQuery)
