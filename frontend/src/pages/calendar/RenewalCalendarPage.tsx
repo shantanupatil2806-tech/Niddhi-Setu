@@ -42,7 +42,7 @@ export const RenewalCalendarPage: React.FC = () => {
     isInstitution && user?.institutionId
       ? typeof user.institutionId === 'string'
         ? user.institutionId
-        : user.institutionId.id
+        : (user.institutionId as any)._id || user.institutionId.id
       : 'all'
   );
   const [fdrs, setFdrs] = useState<FDR[]>([]);
@@ -73,7 +73,7 @@ export const RenewalCalendarPage: React.FC = () => {
           isInstitution && user?.institutionId
             ? typeof user.institutionId === 'string'
               ? user.institutionId
-              : user.institutionId.id
+              : (user.institutionId as any)._id || user.institutionId.id
             : selectedInstId !== 'all'
             ? selectedInstId
             : undefined;
@@ -110,12 +110,17 @@ export const RenewalCalendarPage: React.FC = () => {
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+  const now = new Date();
+  const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month;
+
   // Find FDRs maturing on each day
   const getFdrsForDay = (day: number) => {
     return fdrs
       .filter((fdr) => (showReleased ? true : fdr.status !== 'released'))
       .filter((fdr) => {
+        if (!fdr.maturityDate) return false;
         const d = new Date(fdr.maturityDate);
+        if (isNaN(d.getTime())) return false;
         return (
           d.getFullYear() === year &&
           d.getMonth() === month &&
