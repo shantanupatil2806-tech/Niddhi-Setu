@@ -190,11 +190,14 @@ export const RelationshipGraphPage: React.FC = () => {
               loadGraph(e.target.value);
             }}
           >
-            {institutions.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.name}
-              </option>
-            ))}
+            {institutions.map((i) => {
+              const iid = (i as any)._id || i.id;
+              return (
+                <option key={iid} value={iid}>
+                  {i.name}
+                </option>
+              );
+            })}
           </Select>
         </div>
       </div>

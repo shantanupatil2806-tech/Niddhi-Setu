@@ -226,11 +226,14 @@ export const RenewalCalendarPage: React.FC = () => {
                     onChange={(e) => setSelectedInstId(e.target.value)}
                   >
                     <option value="all">All Institutions</option>
-                    {institutions.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.name}
-                      </option>
-                    ))}
+                    {institutions.map((i) => {
+                      const iid = (i as any)._id || i.id;
+                      return (
+                        <option key={iid} value={iid}>
+                          {i.name}
+                        </option>
+                      );
+                    })}
                   </Select>
                 </div>
               )}

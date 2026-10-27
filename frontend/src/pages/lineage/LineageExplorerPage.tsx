@@ -98,7 +98,7 @@ export const LineageExplorerPage: React.FC = () => {
                   const isCurrent = idx === 1; // Middle one as active
 
                   return (
-                    <React.Fragment key={item.fdr.id || idx}>
+                    <React.Fragment key={(item.fdr as any)._id || item.fdr.id || idx}>
                       {/* Instrument Card */}
                       <div
                         className={`p-5 rounded-2xl border-2 transition-all shadow-xs ${
