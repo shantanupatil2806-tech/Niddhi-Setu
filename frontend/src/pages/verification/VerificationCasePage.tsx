@@ -28,7 +28,7 @@ import {
 import { verificationApi } from '../../api/verification';
 import { fdrsApi } from '../../api/fdrs';
 import { VerificationCase, FDR, VerificationFinding } from '../../types';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatCurrency, formatDate, formatEvidence } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
 export const VerificationCasePage: React.FC = () => {
@@ -312,14 +312,14 @@ export const VerificationCasePage: React.FC = () => {
                   {fnd.evidence && (
                     <div className="p-2 rounded bg-slate-50 border border-slate-100 text-[11px] text-slate-600 font-mono">
                       <strong className="text-slate-800">Evidence: </strong>
-                      {fnd.evidence}
+                      {formatEvidence(fnd.evidence)}
                     </div>
                   )}
 
                   {fnd.suggestedAction && (
                     <div className="text-[11px] text-teal-800 bg-teal-50/70 p-2 rounded border border-teal-100">
                       <strong>Suggested Action: </strong>
-                      {fnd.suggestedAction}
+                      {String(fnd.suggestedAction)}
                     </div>
                   )}
                 </div>

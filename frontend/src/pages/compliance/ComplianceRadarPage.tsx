@@ -33,6 +33,7 @@ import { reportsApi } from '../../api/reports';
 import { institutionsApi } from '../../api/institutions';
 import { fdrsApi } from '../../api/fdrs';
 import { ComplianceRadarData, Institution, FDR, VerificationFinding } from '../../types';
+import { formatEvidence } from '../../utils/formatters';
 
 export const ComplianceRadarPage: React.FC = () => {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -138,11 +139,14 @@ export const ComplianceRadarPage: React.FC = () => {
                 value={selectedInstId}
                 onChange={(e) => setSelectedInstId(e.target.value)}
               >
-                {institutions.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.name}
-                  </option>
-                ))}
+                {institutions.map((i) => {
+                  const instId = String((i as any)._id || i.id);
+                  return (
+                    <option key={instId} value={instId}>
+                      {i.name}
+                    </option>
+                  );
+                })}
               </Select>
             </div>
 
@@ -153,11 +157,14 @@ export const ComplianceRadarPage: React.FC = () => {
                 onChange={(e) => setSelectedFdrId(e.target.value)}
               >
                 <option value="all">Entire Institution Portfolio (Aggregate)</option>
-                {fdrs.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.refNumber} — {f.bankName}
-                  </option>
-                ))}
+                {fdrs.map((f) => {
+                  const fId = String((f as any)._id || f.id);
+                  return (
+                    <option key={fId} value={fId}>
+                      {f.refNumber} — {f.bankName}
+                    </option>
+                  );
+                })}
               </Select>
             </div>
           </div>
@@ -286,16 +293,17 @@ export const ComplianceRadarPage: React.FC = () => {
               </h3>
 
               <div className="space-y-2 pt-1">
-                {items.map((fnd) => {
-                  const isExpanded = !!expandedFindings[fnd.id];
+                {items.map((fnd, idx) => {
+                  const fndId = String(fnd.id || (fnd as any)._id || `${category}-${idx}`);
+                  const isExpanded = !!expandedFindings[fndId];
 
                   return (
                     <div
-                      key={fnd.id}
+                      key={fndId}
                       className="rounded-xl border border-slate-200 bg-white transition-all overflow-hidden"
                     >
                       <div
-                        onClick={() => toggleFindingExpand(fnd.id)}
+                        onClick={() => toggleFindingExpand(fndId)}
                         className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 select-none"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -332,8 +340,8 @@ export const ComplianceRadarPage: React.FC = () => {
                               <span className="text-slate-400 font-semibold uppercase text-[10px]">
                                 Cryptographic & Documentary Evidence:
                               </span>
-                              <div className="font-mono text-[11px] text-slate-700 bg-white p-2.5 rounded border border-slate-200 mt-0.5">
-                                {fnd.evidence}
+                              <div className="font-mono text-[11px] text-slate-700 bg-white p-2.5 rounded border border-slate-200 mt-0.5 whitespace-pre-wrap">
+                                {formatEvidence(fnd.evidence)}
                               </div>
                             </div>
                           )}
@@ -344,7 +352,7 @@ export const ComplianceRadarPage: React.FC = () => {
                                 Officer Remediation Mandate:
                               </span>
                               <p className="text-teal-900 bg-teal-50 p-2.5 rounded border border-teal-200/70 mt-0.5">
-                                {fnd.suggestedAction}
+                                {String(fnd.suggestedAction)}
                               </p>
                             </div>
                           )}

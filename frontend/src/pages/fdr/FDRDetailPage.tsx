@@ -35,7 +35,7 @@ import {
 import { fdrsApi } from '../../api/fdrs';
 import { reportsApi } from '../../api/reports';
 import { FDR, VerificationFinding, AuditEvent, LineageData } from '../../types';
-import { formatCurrency, formatDate, getDaysToMaturity, formatRelativeDate } from '../../utils/formatters';
+import { formatCurrency, formatDate, getDaysToMaturity, formatRelativeDate, formatEvidence } from '../../utils/formatters';
 
 export const FDRDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -424,13 +424,13 @@ export const FDRDetailPage: React.FC = () => {
                         </div>
                       </Td>
                       <Td>
-                        <div className="text-xs font-mono text-slate-600 max-w-xs">
-                          {fnd.evidence || '—'}
+                        <div className="text-xs font-mono text-slate-600 max-w-xs truncate">
+                          {formatEvidence(fnd.evidence)}
                         </div>
                       </Td>
                       <Td>
                         <div className="text-xs text-slate-700 max-w-xs">
-                          {fnd.suggestedAction || '—'}
+                          {String(fnd.suggestedAction || '—')}
                         </div>
                       </Td>
                     </Tr>

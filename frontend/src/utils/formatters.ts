@@ -199,3 +199,26 @@ export function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
+
+/**
+ * Safely format finding evidence which can be an object or string
+ */
+export function formatEvidence(evidence: unknown): string {
+  if (evidence === null || evidence === undefined) return '—';
+  if (typeof evidence === 'object') {
+    try {
+      const obj = evidence as Record<string, any>;
+      if (obj.field || obj.expected !== undefined || obj.value !== undefined) {
+        const parts: string[] = [];
+        if (obj.field) parts.push(`Field: ${obj.field}`);
+        if (obj.value !== undefined) parts.push(`Value: ${obj.value}`);
+        if (obj.expected !== undefined) parts.push(`Expected: ${obj.expected}`);
+        return parts.join(' | ');
+      }
+      return JSON.stringify(evidence);
+    } catch {
+      return '[Evidence Object]';
+    }
+  }
+  return String(evidence);
+}
