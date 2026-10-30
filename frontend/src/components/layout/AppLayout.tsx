@@ -30,7 +30,7 @@ export const AppLayout: React.FC = () => {
       >
         <TopNav onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-300">
+        <main className="flex-1 pt-6 pb-10 px-4 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto animate-in fade-in duration-300">
           <Outlet />
         </main>
       </div>

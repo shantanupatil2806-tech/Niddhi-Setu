@@ -9,6 +9,7 @@ import {
   Calendar,
   FileText,
   AlertCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   Table,
@@ -52,6 +53,9 @@ export const ReleaseRequestsPage: React.FC = () => {
   // Quick officer action state
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  // Only verified or matured FDRs can have a release request submitted
+  const eligibleFdrs = fdrs.filter(f => f.status === 'verified' || f.status === 'matured');
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -61,8 +65,12 @@ export const ReleaseRequestsPage: React.FC = () => {
       ]);
       setRequests(relRes.items);
       setFdrs(fdrsRes.items);
-      if (fdrsRes.items.length > 0) {
-        setSelectedFdrId(fdrsRes.items[0].id);
+      // Auto-select first VERIFIED/MATURED FDR only
+      const eligible = fdrsRes.items.filter((f: FDR) => f.status === 'verified' || f.status === 'matured');
+      if (eligible.length > 0) {
+        setSelectedFdrId(eligible[0].id);
+      } else {
+        setSelectedFdrId('');
       }
     } catch (err) {
       console.error(err);
@@ -79,7 +87,13 @@ export const ReleaseRequestsPage: React.FC = () => {
   const handleCreateRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFdrId || !reason.trim()) {
-      toast.error('Please select an FDR and specify the regulatory release justification.');
+      toast.error('Please select a verified FDR and specify the regulatory release justification.');
+      return;
+    }
+    // Front-end guard: check selected FDR is eligible
+    const selectedFdr = fdrs.find(f => f.id === selectedFdrId);
+    if (selectedFdr && selectedFdr.status !== 'verified' && selectedFdr.status !== 'matured') {
+      toast.error(`Cannot apply for release: FDR is currently "${selectedFdr.status}". The FDR must be verified by an AICTE Finance Officer first.`);
       return;
     }
     try {
@@ -93,8 +107,9 @@ export const ReleaseRequestsPage: React.FC = () => {
       setIsModalOpen(false);
       setReason('');
       fetchData();
-    } catch {
-      toast.error('Failed to submit release application');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Failed to submit release application';
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -295,6 +310,7 @@ export const ReleaseRequestsPage: React.FC = () => {
               size="sm"
               isLoading={submitting}
               onClick={handleCreateRequest}
+              disabled={eligibleFdrs.length === 0}
             >
               Submit Application
             </Button>
@@ -302,36 +318,65 @@ export const ReleaseRequestsPage: React.FC = () => {
         }
       >
         <form onSubmit={handleCreateRequest} className="space-y-4">
-          <Select
-            label="Select Security Deposit Instrument to Release"
-            value={selectedFdrId}
-            onChange={(e) => setSelectedFdrId(e.target.value)}
-            required
-          >
-            {fdrs.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.refNumber} — {f.bankName} ({formatCurrency(f.amount)})
-              </option>
-            ))}
-          </Select>
-
-          <Textarea
-            label="Detailed Justification / Council Clearance Ground"
-            placeholder="State grounds: e.g., Graduation of all enrolled student cohorts, course tenure completion, or replacement guarantee already active..."
-            required
-            rows={4}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
-            <div className="font-semibold text-slate-800">
-              Mandatory Regulatory Prerequisite:
+          {/* Guard: no verified FDRs */}
+          {eligibleFdrs.length === 0 ? (
+            <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <div>
+                <div className="font-bold mb-0.5">No Verified FDR Instruments Available</div>
+                <p>
+                  A release request can only be submitted for an FDR that has been <strong>verified</strong> by
+                  an AICTE Finance Officer through the <strong>Verification Queue</strong>. None of your
+                  registered FDRs are verified yet. Please wait for officer verification before applying.
+                </p>
+              </div>
             </div>
-            <p>
-              Please attach scanned copies of AICTE Council closure approvals or renewal guarantee
-              counterparts. Lien will be officially discharged only upon Member Secretary sign-off.
-            </p>
+          ) : (
+            <>
+              <Select
+                label="Select Verified Security Deposit Instrument to Release"
+                value={selectedFdrId}
+                onChange={(e) => setSelectedFdrId(e.target.value)}
+                required
+              >
+                {eligibleFdrs.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.refNumber} — {f.bankName} ({formatCurrency(f.amount)}) [{f.status.toUpperCase()}]
+                  </option>
+                ))}
+              </Select>
+
+              <Textarea
+                label="Detailed Justification / Council Clearance Ground"
+                placeholder="State grounds: e.g., Graduation of all enrolled student cohorts, course tenure completion, or replacement guarantee already active..."
+                required
+                rows={4}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </>
+          )}
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1.5">
+            <div className="font-semibold text-slate-800">Regulatory Prerequisite Flow:</div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] flex items-center justify-center font-bold shrink-0">1</span>
+                <span>Institution submits &amp; registers FDR</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] flex items-center justify-center font-bold shrink-0">2</span>
+                <span>Finance Officer <strong>verifies FDR</strong> in Verification Queue ← <em>Required first</em></span>
+              </div>
+              <div className={`flex items-center gap-2 ${eligibleFdrs.length === 0 ? 'opacity-40' : ''}`}>
+                <span className={`w-4 h-4 rounded-full ${eligibleFdrs.length > 0 ? 'bg-teal-600' : 'bg-slate-300'} text-white text-[9px] flex items-center justify-center font-bold shrink-0`}>3</span>
+                <span>Institution submits release request ← <strong>You are here</strong></span>
+              </div>
+              <div className="flex items-center gap-2 opacity-40">
+                <span className="w-4 h-4 rounded-full bg-slate-300 text-white text-[9px] flex items-center justify-center font-bold shrink-0">4</span>
+                <span>Clearance Command Center orchestrates multi-dept NOC</span>
+              </div>
+            </div>
           </div>
         </form>
       </Modal>

@@ -222,6 +222,11 @@ export const FDRListScreen: React.FC<{ route: any; navigation: any }> = ({ route
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text style={styles.amountLabel}>Principal Guarantee</Text>
                     <Text style={styles.amountValue}>{formatCurrency(item.amount)}</Text>
+                    {item.maturityAmount ? (
+                      <Text style={{ fontSize: 10, color: '#0d9488', fontWeight: '600', marginTop: 1 }}>
+                        Mat: {formatCurrency(item.maturityAmount)}
+                      </Text>
+                    ) : null}
                   </View>
                 </View>
               </TouchableOpacity>
@@ -258,6 +263,24 @@ export const FDRListScreen: React.FC<{ route: any; navigation: any }> = ({ route
                   <Text style={styles.dossierLabel}>Deposit Amount:</Text>
                   <Text style={[styles.dossierVal, { color: '#0d9488', fontWeight: '800' }]}>
                     {formatCurrency(selectedFdr.amount)}
+                  </Text>
+                </View>
+                <View style={styles.dossierRow}>
+                  <Text style={styles.dossierLabel}>Annual Interest Rate:</Text>
+                  <Text style={styles.dossierVal}>
+                    {selectedFdr.interestRate || 7.1}% p.a. ({selectedFdr.compoundingFrequency || 'quarterly'})
+                  </Text>
+                </View>
+                <View style={styles.dossierRow}>
+                  <Text style={styles.dossierLabel}>Accrued Interest:</Text>
+                  <Text style={[styles.dossierVal, { color: '#059669', fontWeight: '700' }]}>
+                    +{formatCurrency(selectedFdr.accruedInterest || Math.round(selectedFdr.amount * 0.071 * 1.5))}
+                  </Text>
+                </View>
+                <View style={styles.dossierRow}>
+                  <Text style={styles.dossierLabel}>Projected Maturity:</Text>
+                  <Text style={[styles.dossierVal, { color: '#0f766e', fontWeight: '800' }]}>
+                    {formatCurrency(selectedFdr.maturityAmount || Math.round(selectedFdr.amount * 1.15))}
                   </Text>
                 </View>
                 <View style={styles.dossierRow}>

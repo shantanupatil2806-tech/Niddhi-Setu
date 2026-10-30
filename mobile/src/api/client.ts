@@ -1,14 +1,14 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { FDR, DashboardStats, NotificationItem, User } from '../types';
+import { FDR, DashboardStats, NotificationItem, User, ClearanceWorkflow } from '../types';
 
 // Default smart fallback based on platform
 export const getDefaultServerUrl = (): string => {
   if (Platform.OS === 'web') {
     return 'http://localhost:5000/api';
   }
-  // Physical mobile device on local Wi-Fi network
-  return 'http://192.168.1.35:5000/api';
+  // Physical mobile device on local Wi-Fi network (host PC IP: 192.168.1.34)
+  return 'http://192.168.1.34:5000/api';
 };
 
 let currentBaseUrl = getDefaultServerUrl();
@@ -121,6 +121,36 @@ export const apiService = {
   // Release Requests
   async createReleaseRequest(fdrId: string, reason: string): Promise<any> {
     const res = await api.post('/releases', { fdrId, reason });
+    return res.data;
+  },
+
+  // Clearance Workflows (AICTE Interdepartmental Clearance Orchestrator)
+  async getClearanceWorkflows(params?: { status?: string }): Promise<ClearanceWorkflow[]> {
+    const res = await api.get('/clearance/workflows', { params });
+    const items = res.data?.items || res.data?.data || res.data || [];
+    return Array.isArray(items) ? items : [];
+  },
+
+  async getClearanceWorkflowById(id: string): Promise<ClearanceWorkflow> {
+    const res = await api.get(`/clearance/workflows/${id}`);
+    return res.data?.data || res.data;
+  },
+
+  async recordTaskDecision(
+    workflowId: string,
+    taskKey: string,
+    payload: { decision: 'cleared' | 'clarification_required' | 'rejected'; observations?: string }
+  ): Promise<any> {
+    const res = await api.post(`/clearance/workflows/${workflowId}/tasks/${taskKey}/decision`, payload);
+    return res.data;
+  },
+
+  async recordDocumentReview(
+    workflowId: string,
+    docType: string,
+    payload: { decision: 'verified' | 'clarification_required' | 'rejected'; observations?: string; checklist?: any[] }
+  ): Promise<any> {
+    const res = await api.post(`/clearance/workflows/${workflowId}/documents/${docType}/review`, payload);
     return res.data;
   },
 };

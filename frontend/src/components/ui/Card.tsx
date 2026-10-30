@@ -43,7 +43,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
   return (
     <div
       className={clsx(
-        'px-6 py-4.5 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/30',
+        'px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/40',
         className
       )}
       {...props}
@@ -52,7 +52,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
         <>
           <div>
             {title && (
-              <h3 className="font-semibold text-slate-900 text-sm md:text-base leading-tight tracking-tight">
+              <h3 className="font-semibold text-slate-900 text-sm sm:text-base leading-snug tracking-tight">
                 {title}
               </h3>
             )}
@@ -87,7 +87,7 @@ export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   return (
     <div
       className={clsx(
-        'px-6 py-3.5 bg-slate-50/60 border-t border-slate-100/90 rounded-b-2xl flex items-center justify-between text-xs text-slate-500',
+        'px-6 py-4 bg-slate-50/60 border-t border-slate-100/90 rounded-b-2xl flex items-center justify-between text-sm text-slate-500',
         className
       )}
       {...props}

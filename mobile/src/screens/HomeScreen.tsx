@@ -101,6 +101,14 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           <Text style={styles.totalValueText}>
             {formatCurrency(stats?.totalDepositValue)}
           </Text>
+          {stats?.totalMaturityValue && stats.totalMaturityValue > (stats.totalDepositValue || 0) && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+              <Ionicons name="trending-up" size={13} color="#5eead4" style={{ marginRight: 4 }} />
+              <Text style={{ fontSize: 11, color: '#5eead4', fontWeight: '600' }}>
+                Projected Maturity: {formatCurrency(stats.totalMaturityValue)}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 

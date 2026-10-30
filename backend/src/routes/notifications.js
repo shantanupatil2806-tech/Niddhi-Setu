@@ -5,6 +5,7 @@ const FDR = require('../models/FDR');
 const ReleaseRequest = require('../models/ReleaseRequest');
 const VerificationCase = require('../models/VerificationCase');
 const AuditEvent = require('../models/AuditEvent');
+const NotificationRecord = require('../models/NotificationRecord');
 const { ROLES } = require('../config/constants');
 
 /**
@@ -128,6 +129,40 @@ router.get('/', auth, async (req, res, next) => {
         refNumber: fdr.refNumber,
         timestamp: fdr.updatedAt,
         read: true,
+      });
+    });
+
+    // 5. Interdepartmental Clearance Workflow Notifications from NotificationRecord
+    const workflowNotifQuery = {};
+    if (req.user.role === ROLES.INSTITUTION && req.user.institutionId) {
+      const instId = typeof req.user.institutionId === 'object'
+        ? req.user.institutionId._id || req.user.institutionId.id
+        : req.user.institutionId;
+      workflowNotifQuery.institutionId = instId;
+    } else {
+      // Officers and Admins receive their designated role alerts
+      workflowNotifQuery.$or = [
+        { recipient: req.user.id },
+        { recipientRole: req.user.role },
+        { recipientRole: 'admin' }
+      ];
+    }
+
+    const workflowNotifs = await NotificationRecord.find(workflowNotifQuery)
+      .sort({ createdAt: -1 })
+      .limit(15)
+      .lean();
+
+    workflowNotifs.forEach(wn => {
+      notifications.push({
+        id: `wf-${wn._id}`,
+        type: wn.type,
+        priority: wn.priority === 'urgent' ? 'urgent' : wn.priority === 'warning' ? 'warning' : 'info',
+        title: wn.title,
+        message: wn.message,
+        timestamp: wn.createdAt,
+        read: wn.read,
+        releaseRequestId: wn.releaseRequestId
       });
     });
 

@@ -8,6 +8,7 @@ const { uploadMultiple } = require('../middleware/upload');
 const { ROLES, RELEASE_STATUS, FDR_STATUS } = require('../config/constants');
 const { recordAuditEvent } = require('../utils/audit');
 const { computeFileHash } = require('../utils/hash');
+const { initializeWorkflow } = require('../services/orchestratorService');
 
 const router = express.Router();
 
@@ -83,6 +84,16 @@ router.post('/', auth, uploadMultiple, async (req, res, next) => {
       return res.status(403).json({ success: false, error: 'Access denied: FDR belongs to another institution.' });
     }
 
+    // GUARD: FDR must be verified before a release request can be submitted
+    if (fdr.status !== FDR_STATUS.VERIFIED && fdr.status !== FDR_STATUS.MATURED) {
+      return res.status(400).json({
+        success: false,
+        error: `Release request cannot be submitted: FDR instrument is currently '${fdr.status}'. The FDR must be verified by the AICTE Finance Officer through the Verification Queue before a release request can be initiated.`,
+        code: 'FDR_NOT_VERIFIED',
+        currentStatus: fdr.status
+      });
+    }
+
     const uploadedDocuments = [];
     if (req.files && Array.isArray(req.files)) {
       for (const file of req.files) {
@@ -106,6 +117,14 @@ router.post('/', auth, uploadMultiple, async (req, res, next) => {
 
     await releaseRequest.save();
 
+    // Automatically initialize Interdepartmental Clearance Workflow
+    let workflow = null;
+    try {
+      workflow = await initializeWorkflow(releaseRequest, fdr, fdr.institutionId, req.user.id);
+    } catch (wfErr) {
+      console.error('[ClearanceOrchestrator] Error initializing workflow:', wfErr.message);
+    }
+
     await recordAuditEvent(
       'ReleaseRequest',
       releaseRequest._id,
@@ -117,7 +136,8 @@ router.post('/', auth, uploadMultiple, async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      data: releaseRequest
+      data: releaseRequest,
+      workflow
     });
   } catch (err) {
     next(err);

@@ -9,7 +9,7 @@ export const Table: React.FC<React.TableHTMLAttributes<HTMLTableElement>> = ({
 }) => {
   return (
     <div className="w-full overflow-x-auto rounded-xl border border-slate-200/80 shadow-xs bg-white">
-      <table className={clsx('w-full text-left border-collapse text-xs sm:text-sm', className)} {...props}>
+      <table className={clsx('w-full text-left border-collapse text-sm', className)} {...props}>
         {children}
       </table>
     </div>
@@ -85,7 +85,7 @@ export const Th: React.FC<ThProps> = ({
   return (
     <th
       className={clsx(
-        'px-4 py-3.5 select-none font-semibold text-slate-600',
+        'px-4 py-3 select-none font-semibold text-slate-600',
         sortable && 'cursor-pointer hover:text-slate-900 hover:bg-slate-100/50 transition-colors',
         className
       )}

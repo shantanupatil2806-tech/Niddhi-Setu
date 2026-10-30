@@ -47,10 +47,19 @@ const upload = multer({
 
 const uploadSingle = upload.single('document');
 const uploadMultiple = upload.array('documents', 5);
+const uploadFdrWithDocs = upload.fields([
+  { name: 'document', maxCount: 1 },
+  { name: 'fdr_copy', maxCount: 1 },
+  { name: 'request_letter', maxCount: 1 },
+  { name: 'affidavit_6', maxCount: 1 },
+  { name: 'payment_proof', maxCount: 1 },
+  { name: 'eoa_loa', maxCount: 1 }
+]);
 
 module.exports = {
   upload,
   uploadSingle,
   uploadMultiple,
+  uploadFdrWithDocs,
   uploadDirectory
 };

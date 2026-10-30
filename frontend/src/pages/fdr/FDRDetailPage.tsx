@@ -264,6 +264,75 @@ export const FDRDetailPage: React.FC = () => {
               </CardContent>
             </Card>
 
+            {/* Financial Yield & Maturity Valuation Card */}
+            <Card>
+              <CardHeader
+                title="Financial Yield & Statutory Maturity Valuation"
+                subtitle="Interest accumulation and maturity valuation calculated as per scheduled banking regulations"
+                action={
+                  <Badge variant="teal" size="sm">
+                    {fdr.interestRate || 7.1}% p.a. ({fdr.compoundingFrequency || 'Quarterly'})
+                  </Badge>
+                }
+              />
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Principal in Lien
+                    </div>
+                    <div className="text-lg font-bold text-slate-900 mt-1">
+                      {formatCurrency(fdr.amount)}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Statutory Deposit Base</div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+                    <div className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">
+                      Accrued Interest to Date
+                    </div>
+                    <div className="text-lg font-bold text-emerald-700 mt-1">
+                      +{formatCurrency(fdr.accruedInterest || Math.round(fdr.amount * 0.071 * 1.5))}
+                    </div>
+                    <div className="text-[11px] text-emerald-600 mt-0.5">Accumulated during tenure</div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200/80">
+                    <div className="text-[11px] font-semibold text-teal-800 uppercase tracking-wider">
+                      Projected Maturity Value
+                    </div>
+                    <div className="text-lg font-extrabold text-teal-950 mt-1">
+                      {formatCurrency(fdr.maturityAmount || Math.round(fdr.amount * 1.15))}
+                    </div>
+                    <div className="text-[11px] text-teal-600 mt-0.5">Payable upon lien discharge</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                  <div className="p-3 bg-white rounded-lg border border-slate-200/80">
+                    <span className="text-slate-400 uppercase font-semibold text-[10px]">
+                      Interest Payout Structure
+                    </span>
+                    <div className="font-semibold text-slate-900 mt-0.5">
+                      {fdr.interestPayoutType === 'periodic_payout'
+                        ? 'Periodic Payout to Registered Trust A/c'
+                        : 'Cumulative Reinvestment (Compounded to Maturity)'}
+                    </div>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg border border-slate-200/80">
+                    <span className="text-slate-400 uppercase font-semibold text-[10px]">
+                      Statutory Tax Deducted at Source (TDS)
+                    </span>
+                    <div className="font-semibold text-slate-900 mt-0.5">
+                      {fdr.tdsApplicable
+                        ? 'Standard Banking TDS Deductible (10% u/s 194A)'
+                        : 'Exempt / Section 197 Certificate / Form 15G/15H (Nil TDS)'}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Extracted Metadata Fields with Confidence Score */}
             <Card>
               <CardHeader

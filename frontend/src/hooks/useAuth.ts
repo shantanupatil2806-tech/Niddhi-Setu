@@ -12,7 +12,7 @@ export function useAuth() {
 
   const role = user?.role;
   const isInstitution = role === 'institution';
-  const isOfficer = role === 'officer';
+  const isOfficer = role === 'officer' || (typeof role === 'string' && role.startsWith('officer_'));
   const isAdmin = role === 'admin';
   const isStaff = isOfficer || isAdmin;
 

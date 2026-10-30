@@ -14,6 +14,12 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'AICTE Administrator',
   officer: 'Verification Officer',
   institution: 'Institution Nodal Officer',
+  officer_admin: 'Administrative Officer',
+  officer_finance: 'Finance / FDR Officer',
+  officer_approval: 'Approval Bureau Officer',
+  officer_pgrc: 'PGRC Officer',
+  officer_vigilance: 'Vigilance Officer (CVO)',
+  officer_cell: 'Authorized Cell Officer',
 };
 
 export const SEVERITY_LABELS: Record<VerificationSeverity, string> = {

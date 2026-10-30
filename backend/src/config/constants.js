@@ -23,7 +23,14 @@ const VERIFICATION_STATUS = Object.freeze({
 const ROLES = Object.freeze({
   INSTITUTION: 'institution',
   OFFICER: 'officer',
-  ADMIN: 'admin'
+  ADMIN: 'admin',
+  // Granular clearance roles (backward-compatible with 'officer' and 'admin')
+  OFFICER_ADMIN: 'officer_admin',
+  OFFICER_FINANCE: 'officer_finance',
+  OFFICER_APPROVAL: 'officer_approval',
+  OFFICER_PGRC: 'officer_pgrc',
+  OFFICER_VIGILANCE: 'officer_vigilance',
+  OFFICER_CELL: 'officer_cell'
 });
 
 const FINDING_SEVERITY = Object.freeze({

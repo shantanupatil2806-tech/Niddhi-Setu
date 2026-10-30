@@ -11,6 +11,8 @@ import {
   XCircle,
   Send,
   Lock,
+  ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
 import {
   Card,
@@ -136,20 +138,32 @@ export const ReleaseRequestDetailPage: React.FC = () => {
           </h1>
         </div>
 
-        <div>
-          {request.status === 'approved' ? (
-            <Badge variant="success" dot size="md">
-              Release Sanctioned & Discharged
-            </Badge>
-          ) : request.status === 'rejected' ? (
-            <Badge variant="danger" dot size="md">
-              Release Rejected
-            </Badge>
-          ) : (
-            <Badge variant="warning" dot size="md">
-              Awaiting Council Scrutiny
-            </Badge>
-          )}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/clearance')}
+            leftIcon={<ShieldCheck className="w-4 h-4 text-teal-600" />}
+            rightIcon={<ArrowRight className="w-3.5 h-3.5 text-slate-400" />}
+          >
+            Clearance Command Center
+          </Button>
+
+          <div>
+            {request.status === 'approved' ? (
+              <Badge variant="success" dot size="md">
+                Release Sanctioned & Discharged
+              </Badge>
+            ) : request.status === 'rejected' ? (
+              <Badge variant="danger" dot size="md">
+                Release Rejected
+              </Badge>
+            ) : (
+              <Badge variant="warning" dot size="md">
+                Awaiting Council Scrutiny
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 

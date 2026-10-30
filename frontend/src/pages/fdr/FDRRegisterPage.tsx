@@ -338,58 +338,67 @@ export const FDRRegisterPage: React.FC = () => {
                       onClick={() => navigate(`/fdrs/${fdr.id}`)}
                     >
                       <Td>
-                        <div className="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
+                        <div className="font-semibold text-sm text-slate-900 flex items-center gap-1.5 flex-wrap">
                           <span>{fdr.refNumber}</span>
                           {fdr.parentFdrId && (
-                            <span className="text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200">
+                            <span className="text-[11px] font-medium text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
                               Renewed
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                        <div className="text-[11px] font-mono text-slate-400 mt-1">
                           ID: {fdr.id}
                         </div>
                       </Td>
                       <Td>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-800 font-medium max-w-[200px] truncate">
-                          <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <div className="flex items-center gap-1.5 text-sm text-slate-800 font-medium max-w-[200px] truncate">
+                          <Building className="w-4 h-4 text-slate-400 shrink-0" />
                           <span className="truncate">{instName}</span>
                         </div>
                       </Td>
                       <Td>
-                        <div className="text-xs text-slate-900 font-medium">{fdr.bankName}</div>
-                        <div className="text-[11px] text-slate-400 truncate max-w-[160px]">
+                        <div className="text-sm text-slate-900 font-medium">{fdr.bankName}</div>
+                        <div className="text-xs text-slate-500 mt-0.5 truncate max-w-[160px]">
                           {fdr.branch || 'Branch N/A'}
                         </div>
                       </Td>
                       <Td>
-                        <div className="font-semibold text-xs text-slate-900">
+                        <div className="font-semibold text-sm text-slate-900">
                           {formatCurrency(fdr.amount)}
                         </div>
+                        {fdr.maturityAmount ? (
+                          <div className="text-[11px] text-teal-700 font-medium mt-0.5">
+                            Maturity: {formatCurrency(fdr.maturityAmount)}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-slate-400 mt-0.5">
+                            Yield: {fdr.interestRate || 7.1}% p.a.
+                          </div>
+                        )}
                       </Td>
                       <Td>
-                        <span className="text-xs text-slate-600">
+                        <span className="text-sm text-slate-600">
                           {formatDate(fdr.issueDate)}
                         </span>
                       </Td>
                       <Td>
-                        <span className="text-xs text-slate-900 font-medium">
+                        <span className="text-sm text-slate-900 font-medium">
                           {formatDate(fdr.maturityDate)}
                         </span>
                       </Td>
                       <Td>
                         {days < 0 ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                            <AlertCircle className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200 whitespace-nowrap">
+                            <AlertCircle className="w-3.5 h-3.5" />
                             Overdue ({Math.abs(days)}d)
                           </span>
                         ) : days <= 30 ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                            <Calendar className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 whitespace-nowrap">
+                            <Calendar className="w-3.5 h-3.5" />
                             {days} days
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-600">{days} days</span>
+                          <span className="text-sm text-slate-600">{days} days</span>
                         )}
                       </Td>
                       <Td>

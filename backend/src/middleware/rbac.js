@@ -2,7 +2,8 @@ const { ROLES } = require('../config/constants');
 
 /**
  * Middleware to restrict route access to specific user roles
- * @param  {...string} roles - Permitted roles (e.g. 'admin', 'officer', 'institution')
+ * Supports granular department clearance roles as well as general officer/admin roles
+ * @param  {...string} roles - Permitted roles (e.g. 'admin', 'officer', 'institution', 'officer_pgrc', etc.)
  */
 const requireRole = (...roles) => {
   return (req, res, next) => {
@@ -13,14 +14,28 @@ const requireRole = (...roles) => {
       });
     }
 
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        error: `Access forbidden: Permitted roles are [${roles.join(', ')}]. Current role is '${req.user.role}'.`
-      });
+    const userRole = req.user.role;
+
+    // Direct match
+    if (roles.includes(userRole)) {
+      return next();
     }
 
-    next();
+    // Role hierarchy:
+    // If 'officer' is accepted, any department-specific officer role qualifies
+    if (roles.includes(ROLES.OFFICER) && userRole.startsWith('officer')) {
+      return next();
+    }
+
+    // Admin has governance access across officer actions unless explicitly restricted
+    if (userRole === ROLES.ADMIN && roles.some(r => r.startsWith('officer') || r === ROLES.OFFICER)) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      error: `Access forbidden: Permitted roles are [${roles.join(', ')}]. Current role is '${userRole}'.`
+    });
   };
 };
 

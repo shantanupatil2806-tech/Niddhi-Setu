@@ -4,6 +4,7 @@ const FDR = require('../models/FDR');
 const VerificationCase = require('../models/VerificationCase');
 const RenewalOrReplacement = require('../models/RenewalOrReplacement');
 const ReleaseRequest = require('../models/ReleaseRequest');
+const ClearanceWorkflow = require('../models/ClearanceWorkflow');
 const AuditEvent = require('../models/AuditEvent');
 const auth = require('../middleware/auth');
 const { ROLES, FDR_STATUS, VERIFICATION_STATUS, CASE_PRIORITY } = require('../config/constants');
@@ -27,12 +28,14 @@ router.get('/summary', auth, async (req, res, next) => {
     const fdrQuery = {};
     const renewalQuery = {};
     const releaseQuery = {};
+    const clearanceQuery = {};
 
     if (req.user.role === ROLES.INSTITUTION && req.user.institutionId) {
       const instId = toObjectId(req.user.institutionId);
       fdrQuery.institutionId = instId;
       renewalQuery.institutionId = instId;
       releaseQuery.institutionId = instId;
+      clearanceQuery.institutionId = instId;
     }
 
     const now = new Date();
@@ -47,7 +50,10 @@ router.get('/summary', auth, async (req, res, next) => {
       clarificationRequired,
       renewedCount,
       releasePendingCount,
-      totalAmountResult
+      activeClearanceCount,
+      totalAmountResult,
+      totalMaturityResult,
+      totalAccruedResult
     ] = await Promise.all([
       FDR.countDocuments(fdrQuery),
       FDR.countDocuments({ ...fdrQuery, status: FDR_STATUS.VERIFIED }),
@@ -65,13 +71,27 @@ router.get('/summary', auth, async (req, res, next) => {
       FDR.countDocuments({ ...fdrQuery, status: FDR_STATUS.CLARIFICATION_REQUIRED }),
       RenewalOrReplacement.countDocuments(renewalQuery),
       ReleaseRequest.countDocuments({ ...releaseQuery, status: 'pending' }),
+      ClearanceWorkflow.countDocuments({
+        ...clearanceQuery,
+        status: { $in: ['initiated', 'documents_under_review', 'departmental_clearance_in_progress', 'ready_for_final_sanction'] }
+      }),
       FDR.aggregate([
         { $match: fdrQuery },
         { $group: { _id: null, totalAmount: { $sum: '$amount' } } }
+      ]),
+      FDR.aggregate([
+        { $match: fdrQuery },
+        { $group: { _id: null, totalMaturityValue: { $sum: '$maturityAmount' } } }
+      ]),
+      FDR.aggregate([
+        { $match: fdrQuery },
+        { $group: { _id: null, totalAccruedInterest: { $sum: '$accruedInterest' } } }
       ])
     ]);
 
     const totalGuaranteeAmount = totalAmountResult.length > 0 ? totalAmountResult[0].totalAmount : 0;
+    const totalMaturityValue = totalMaturityResult && totalMaturityResult.length > 0 ? totalMaturityResult[0].totalMaturityValue : totalGuaranteeAmount;
+    const totalAccruedInterest = totalAccruedResult && totalAccruedResult.length > 0 ? totalAccruedResult[0].totalAccruedInterest : 0;
 
     return res.status(200).json({
       success: true,
@@ -92,8 +112,12 @@ router.get('/summary', auth, async (req, res, next) => {
         renewedFdrs: renewedCount,
         release_pending: releasePendingCount,
         releasePending: releasePendingCount,
+        active_clearances: activeClearanceCount,
+        activeClearances: activeClearanceCount,
         total_guarantee_amount: totalGuaranteeAmount,
-        totalDepositValue: totalGuaranteeAmount
+        totalDepositValue: totalGuaranteeAmount,
+        totalMaturityValue,
+        totalAccruedInterest
       }
     });
   } catch (err) {

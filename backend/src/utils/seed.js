@@ -8,6 +8,9 @@ const VerificationCase = require('../models/VerificationCase');
 const VerificationFinding = require('../models/VerificationFinding');
 const RenewalOrReplacement = require('../models/RenewalOrReplacement');
 const ReleaseRequest = require('../models/ReleaseRequest');
+const ClearanceWorkflow = require('../models/ClearanceWorkflow');
+const WorkflowConfig = require('../models/WorkflowConfig');
+const NotificationRecord = require('../models/NotificationRecord');
 const AuditEvent = require('../models/AuditEvent');
 const VerificationPassport = require('../models/VerificationPassport');
 const { ROLES, INSTITUTION_TYPES, INSTITUTION_STATUS, FDR_STATUS, VERIFICATION_STATUS, CASE_STATUS, CASE_PRIORITY, RENEWAL_TYPE, RENEWAL_STATUS, RELEASE_STATUS, FINDING_SEVERITY, FINDING_CATEGORY } = require('../config/constants');
@@ -34,6 +37,9 @@ async function seedDatabase() {
     VerificationFinding.deleteMany({}),
     RenewalOrReplacement.deleteMany({}),
     ReleaseRequest.deleteMany({}),
+    ClearanceWorkflow.deleteMany({}),
+    WorkflowConfig.deleteMany({}),
+    NotificationRecord.deleteMany({}),
     AuditEvent.deleteMany({}),
     VerificationPassport.deleteMany({})
   ]);
@@ -121,6 +127,56 @@ async function seedDatabase() {
       isActive: true
     },
     {
+      name: 'Central Admin (AICTE)',
+      email: 'admin@aicte.gov.in',
+      passwordHash: adminPasswordHash,
+      role: ROLES.ADMIN,
+      isActive: true
+    },
+    {
+      name: 'Administrative Scrutiny Officer',
+      email: 'admin.officer@aicte.gov.in',
+      passwordHash: officerPasswordHash,
+      role: ROLES.OFFICER_ADMIN,
+      isActive: true
+    },
+    {
+      name: 'Financial / FDR Scrutiny Officer',
+      email: 'finance.officer@aicte.gov.in',
+      passwordHash: officerPasswordHash,
+      role: ROLES.OFFICER_FINANCE,
+      isActive: true
+    },
+    {
+      name: 'PGRC Grievance Officer',
+      email: 'pgrc.officer@aicte.gov.in',
+      passwordHash: officerPasswordHash,
+      role: ROLES.OFFICER_PGRC,
+      isActive: true
+    },
+    {
+      name: 'Chief Vigilance Officer (CVO)',
+      email: 'vigilance.officer@aicte.gov.in',
+      passwordHash: officerPasswordHash,
+      role: ROLES.OFFICER_VIGILANCE,
+      isActive: true
+    },
+    {
+      name: 'Approval Bureau Officer',
+      email: 'approval.officer@aicte.gov.in',
+      passwordHash: officerPasswordHash,
+      role: ROLES.OFFICER_APPROVAL,
+      isActive: true
+    },
+    {
+      name: 'Principal (GEC Raipur)',
+      email: 'principal@gec-raipur.edu.in',
+      passwordHash: instPasswordHash,
+      role: ROLES.INSTITUTION,
+      institutionId: iitd._id,
+      isActive: true
+    },
+    {
       name: 'Prof. S. K. Gupta (IIT Delhi)',
       email: 'registrar@iitd.ac.in',
       passwordHash: instPasswordHash,
@@ -167,6 +223,9 @@ async function seedDatabase() {
     issueDate: new Date('2022-04-10'),
     maturityDate: new Date('2024-04-10'),
     depositPeriodMonths: 24,
+    interestRate: 7.1,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.MATURED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     docOriginalName: 'sbi_fd_receipt_9011.pdf',
@@ -189,6 +248,9 @@ async function seedDatabase() {
     issueDate: new Date('2024-04-10'),
     maturityDate: fdr2Maturity,
     depositPeriodMonths: 24,
+    interestRate: 7.1,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.VERIFIED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     parentFdrId: fdr1._id,
@@ -212,6 +274,9 @@ async function seedDatabase() {
     issueDate: new Date(),
     maturityDate: new Date(now.getTime() + 730 * 24 * 60 * 60 * 1000),
     depositPeriodMonths: 24,
+    interestRate: 7.1,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.SUBMITTED,
     verificationStatus: VERIFICATION_STATUS.PENDING,
     parentFdrId: fdr2._id,
@@ -233,6 +298,9 @@ async function seedDatabase() {
     issueDate: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000),
     maturityDate: new Date(now.getTime() + 540 * 24 * 60 * 60 * 1000),
     depositPeriodMonths: 24,
+    interestRate: 7.1,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.VERIFIED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     docOriginalName: 'pnb_fd_1044.pdf',
@@ -253,6 +321,9 @@ async function seedDatabase() {
     issueDate: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
     maturityDate: new Date(now.getTime() + 300 * 24 * 60 * 60 * 1000),
     depositPeriodMonths: 12,
+    interestRate: 7.25,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.CLARIFICATION_REQUIRED,
     verificationStatus: VERIFICATION_STATUS.FLAGGED,
     docOriginalName: 'hdfc_receipt_8821.pdf',
@@ -274,6 +345,9 @@ async function seedDatabase() {
     issueDate: new Date('2021-08-15'),
     maturityDate: new Date('2024-08-15'),
     depositPeriodMonths: 36,
+    interestRate: 7.2,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.MATURED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     docOriginalName: 'canara_rec_3310.pdf',
@@ -294,6 +368,9 @@ async function seedDatabase() {
     issueDate: new Date('2024-08-15'),
     maturityDate: new Date('2027-08-15'),
     depositPeriodMonths: 36,
+    interestRate: 7.2,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.VERIFIED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     parentFdrId: fdr6._id,
@@ -315,6 +392,9 @@ async function seedDatabase() {
     issueDate: new Date(now.getTime() - 120 * 24 * 60 * 60 * 1000),
     maturityDate: new Date(now.getTime() + 240 * 24 * 60 * 60 * 1000),
     depositPeriodMonths: 12,
+    interestRate: 7.1,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.UNDER_REVIEW,
     verificationStatus: VERIFICATION_STATUS.UNDER_REVIEW,
     docOriginalName: 'sbi_bhel_5590.pdf',
@@ -335,6 +415,9 @@ async function seedDatabase() {
     issueDate: new Date('2023-01-10'),
     maturityDate: new Date('2025-01-10'),
     depositPeriodMonths: 24,
+    interestRate: 7.0,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.RELEASED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     docOriginalName: 'bob_thillai_7711.pdf',
@@ -356,6 +439,9 @@ async function seedDatabase() {
     issueDate: new Date(now.getTime() - 350 * 24 * 60 * 60 * 1000),
     maturityDate: fdr10Maturity,
     depositPeriodMonths: 12,
+    interestRate: 7.25,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.VERIFIED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     docOriginalName: 'iob_cantonment_0099.pdf',
@@ -377,6 +463,9 @@ async function seedDatabase() {
     issueDate: new Date('2022-07-01'),
     maturityDate: new Date('2024-07-01'),
     depositPeriodMonths: 24,
+    interestRate: 7.1,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.MATURED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     docOriginalName: 'icici_bits_7701.pdf',
@@ -397,6 +486,9 @@ async function seedDatabase() {
     issueDate: new Date('2024-07-01'),
     maturityDate: new Date('2026-07-01'),
     depositPeriodMonths: 24,
+    interestRate: 7.1,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.VERIFIED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     parentFdrId: fdr11._id,
@@ -418,6 +510,9 @@ async function seedDatabase() {
     issueDate: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
     maturityDate: new Date(now.getTime() + 630 * 24 * 60 * 60 * 1000),
     depositPeriodMonths: 24,
+    interestRate: 7.1,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.VERIFIED,
     verificationStatus: VERIFICATION_STATUS.VERIFIED,
     docOriginalName: 'sbi_ceeri_1102.pdf',
@@ -438,6 +533,9 @@ async function seedDatabase() {
     issueDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
     maturityDate: new Date(now.getTime() + 360 * 24 * 60 * 60 * 1000),
     depositPeriodMonths: 12,
+    interestRate: 7.3,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.SUBMITTED,
     verificationStatus: VERIFICATION_STATUS.PENDING,
     docOriginalName: 'axis_bits_6641.pdf',
@@ -458,6 +556,9 @@ async function seedDatabase() {
     issueDate: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
     maturityDate: new Date(now.getTime() + 330 * 24 * 60 * 60 * 1000),
     depositPeriodMonths: 12,
+    interestRate: 6.8,
+    compoundingFrequency: 'quarterly',
+    interestPayoutType: 'cumulative',
     status: FDR_STATUS.REJECTED,
     verificationStatus: VERIFICATION_STATUS.REJECTED,
     docOriginalName: 'union_bank_9922.pdf',
@@ -514,32 +615,88 @@ async function seedDatabase() {
     }).save()
   ]);
 
-  // 5. Create ReleaseRequest Records
-  console.log('[Seed] Seeding Release request records...');
-  await Promise.all([
-    new ReleaseRequest({
-      fdrId: fdr9._id,
-      institutionId: nitt._id,
-      requestedBy: nittUser._id,
-      reason: 'Completion of 10-year accreditation guarantee obligation with full clearance.',
-      status: RELEASE_STATUS.RELEASED,
-      amount: 6000000,
-      officerId: officerSharma._id,
-      officerDecision: RELEASE_STATUS.RELEASED,
-      decisionAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
-      decisionNotes: 'All statutory compliances verified. Refund release sanctioned.',
-      documents: [{ docPath: 'uploads/nitt_release_clearance.pdf', docHash: helperHash('rel-9'), docOriginalName: 'clearance.pdf' }]
-    }).save(),
-    new ReleaseRequest({
-      fdrId: fdr4._id,
-      institutionId: iitd._id,
-      requestedBy: iitdUser._id,
-      reason: 'Course expansion guarantee fulfilled; security deposit release requested.',
-      status: RELEASE_STATUS.PENDING,
-      amount: 5000000,
-      documents: []
-    }).save()
-  ]);
+  // 5. Create ReleaseRequest Records & ClearanceWorkflows
+  console.log('[Seed] Seeding Release request records and Orchestrator Workflows...');
+  const rel1 = await new ReleaseRequest({
+    fdrId: fdr9._id,
+    institutionId: nitt._id,
+    requestedBy: nittUser._id,
+    reason: 'Completion of 10-year accreditation guarantee obligation with full clearance.',
+    status: RELEASE_STATUS.RELEASED,
+    amount: 6000000,
+    officerId: officerSharma._id,
+    officerDecision: RELEASE_STATUS.RELEASED,
+    decisionAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
+    decisionNotes: 'All statutory compliances verified. Refund release sanctioned.',
+    documents: [{ docPath: 'uploads/nitt_release_clearance.pdf', docHash: helperHash('rel-9'), docOriginalName: 'clearance.pdf' }]
+  }).save();
+
+  const rel2 = await new ReleaseRequest({
+    fdrId: fdr4._id,
+    institutionId: iitd._id,
+    requestedBy: iitdUser._id,
+    reason: 'Course expansion guarantee fulfilled; security deposit release requested.',
+    status: RELEASE_STATUS.PENDING,
+    amount: 5000000,
+    documents: []
+  }).save();
+
+  // Create active ClearanceWorkflows linked to the ReleaseRequests
+  await new WorkflowConfig().save();
+
+  // Completed workflow for rel1
+  const wf1 = new ClearanceWorkflow({
+    releaseRequestId: rel1._id,
+    fdrId: fdr9._id,
+    institutionId: nitt._id,
+    status: 'approved',
+    documents: [
+      { docType: 'request_letter', version: 1, status: 'verified', docPath: 'uploads/req_letter.pdf', docHash: helperHash('req-1'), verifiedBy: officerSharma._id, verifiedAt: now },
+      { docType: 'affidavit_6', version: 1, status: 'verified', docPath: 'uploads/affidavit6.pdf', docHash: helperHash('aff-1'), verifiedBy: officerSharma._id, verifiedAt: now },
+      { docType: 'fdr_copy', version: 1, status: 'verified', docPath: 'uploads/fdr_copy.pdf', docHash: helperHash('fdr-1'), verifiedBy: officerSharma._id, verifiedAt: now },
+      { docType: 'payment_proof', version: 1, status: 'verified', docPath: 'uploads/payment.pdf', docHash: helperHash('pay-1'), verifiedBy: officerSharma._id, verifiedAt: now },
+      { docType: 'eoa_loa', version: 1, status: 'verified', docPath: 'uploads/eoa.pdf', docHash: helperHash('eoa-1'), verifiedBy: officerSharma._id, verifiedAt: now }
+    ],
+    tasks: [
+      { taskKey: 'admin_scrutiny', name: 'Administrative & Statutory Affidavit Scrutiny', department: 'administrative', assignedRole: 'officer_admin', status: 'cleared', isMandatory: true, clearedAt: now, outcome: 'cleared' },
+      { taskKey: 'financial_scrutiny', name: 'FDR Instrument & Payment Ledger Scrutiny', department: 'finance', assignedRole: 'officer_finance', status: 'cleared', isMandatory: true, clearedAt: now, outcome: 'cleared' },
+      { taskKey: 'approval_compliance', name: 'Academic Approval (LoA/EoA) & Program Closure Verification', department: 'approval_bureau', assignedRole: 'officer_approval', status: 'cleared', isMandatory: true, clearedAt: now, outcome: 'cleared' },
+      { taskKey: 'pgrc_clearance', name: 'Public Grievance Redressal Cell (PGRC) Clearance', department: 'pgrc', assignedRole: 'officer_pgrc', status: 'cleared', isMandatory: true, clearedAt: now, outcome: 'cleared' },
+      { taskKey: 'vigilance_clearance', name: 'Chief Vigilance Officer (CVO) Integrity Clearance', department: 'vigilance', assignedRole: 'officer_vigilance', status: 'cleared', isMandatory: true, clearedAt: now, outcome: 'cleared' },
+      { taskKey: 'final_approval', name: 'Approval Bureau Final Sanction & NOC Clearance', department: 'approval_bureau', assignedRole: 'officer_approval', status: 'cleared', isMandatory: true, clearedAt: now, outcome: 'cleared' }
+    ],
+    completedAt: now
+  });
+  await wf1.save();
+
+  // Active in-progress workflow for rel2
+  const wf2 = new ClearanceWorkflow({
+    releaseRequestId: rel2._id,
+    fdrId: fdr4._id,
+    institutionId: iitd._id,
+    status: 'departmental_clearance_in_progress',
+    documents: [
+      { docType: 'request_letter', version: 1, status: 'verified', docPath: 'uploads/iitd_req.pdf', docHash: helperHash('iitd-req'), verifiedBy: officerSharma._id, verifiedAt: now },
+      { docType: 'affidavit_6', version: 1, status: 'verified', docPath: 'uploads/iitd_aff6.pdf', docHash: helperHash('iitd-aff6'), verifiedBy: officerSharma._id, verifiedAt: now },
+      { docType: 'fdr_copy', version: 1, status: 'verified', docPath: 'uploads/iitd_fdrcopy.pdf', docHash: helperHash('iitd-fdrcopy'), verifiedBy: officerSharma._id, verifiedAt: now },
+      { docType: 'payment_proof', version: 1, status: 'uploaded', docPath: 'uploads/iitd_utr.pdf', docHash: helperHash('iitd-utr') },
+      { docType: 'eoa_loa', version: 1, status: 'not_uploaded' }
+    ],
+    tasks: [
+      { taskKey: 'admin_scrutiny', name: 'Administrative & Statutory Affidavit Scrutiny', department: 'administrative', assignedRole: 'officer_admin', status: 'cleared', isMandatory: true, clearedAt: now, outcome: 'cleared' },
+      { taskKey: 'financial_scrutiny', name: 'FDR Instrument & Payment Ledger Scrutiny', department: 'finance', assignedRole: 'officer_finance', status: 'in_progress', isMandatory: true, dueDate: new Date(now.getTime() + 48 * 3600000) },
+      { taskKey: 'approval_compliance', name: 'Academic Approval (LoA/EoA) & Program Closure Verification', department: 'approval_bureau', assignedRole: 'officer_approval', status: 'pending', isMandatory: true, dueDate: new Date(now.getTime() + 48 * 3600000) },
+      { taskKey: 'pgrc_clearance', name: 'Public Grievance Redressal Cell (PGRC) Clearance', department: 'pgrc', assignedRole: 'officer_pgrc', status: 'pending', isMandatory: true, dueDate: new Date(now.getTime() + 24 * 3600000) },
+      { taskKey: 'vigilance_clearance', name: 'Chief Vigilance Officer (CVO) Integrity Clearance', department: 'vigilance', assignedRole: 'officer_vigilance', status: 'pending', isMandatory: true, dueDate: new Date(now.getTime() + 72 * 3600000) },
+      { taskKey: 'final_approval', name: 'Approval Bureau Final Sanction & NOC Clearance', department: 'approval_bureau', assignedRole: 'officer_approval', status: 'blocked', isMandatory: true, dependsOn: ['admin_scrutiny', 'financial_scrutiny', 'approval_compliance', 'pgrc_clearance', 'vigilance_clearance'] }
+    ],
+    blockedReasons: ['LoA/EoA document pending upload', 'Final Approval Bureau sanction is blocked awaiting mandatory clearances from: financial_scrutiny, approval_compliance, pgrc_clearance, vigilance_clearance.'],
+    nextPermittedActions: [
+      { action: 'UPLOAD_EOA_LOA', role: 'institution', description: 'Upload latest AICTE Extension of Approval (EoA) letter.' },
+      { action: 'COMPLETE_PGRC', role: 'officer_pgrc', description: 'Record student/public grievance assessment.' }
+    ]
+  });
+  await wf2.save();
 
   // 6. Create VerificationCases, Findings, Passports & Audit Trails
   console.log('[Seed] Generating verification cases, passports, and chained audit trails...');

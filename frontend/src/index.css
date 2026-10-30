@@ -101,3 +101,89 @@
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600;
 }
+
+/* Dedicated Print Optimization for Official Regulatory Orders & Sanctions */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* When printing an official order letter, hide the entire background app */
+  body:has(#aicte-noc-sanction-letter) #root,
+  body:has(#aicte-noc-sanction-letter) aside,
+  body:has(#aicte-noc-sanction-letter) nav,
+  body:has(#aicte-noc-sanction-letter) header,
+  body:has(#aicte-noc-sanction-letter) .no-print,
+  body:has(#aicte-noc-sanction-letter) button {
+    display: none !important;
+  }
+
+  body:has(#aicte-noc-sanction-letter) .fixed.inset-0 {
+    position: static !important;
+    inset: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    display: block !important;
+    background: transparent !important;
+  }
+
+  body:has(#aicte-noc-sanction-letter) div[aria-hidden="true"] {
+    display: none !important;
+  }
+
+  body:has(#aicte-noc-sanction-letter) [role="dialog"] {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  body:has(#aicte-noc-sanction-letter) [role="dialog"] > div:first-child {
+    display: none !important;
+  }
+
+  body:has(#aicte-noc-sanction-letter) [role="dialog"] > div:nth-child(2) {
+    padding: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  #aicte-noc-sanction-letter {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+    padding: 8mm 10mm !important;
+    border: 2px solid #0f172a !important;
+    border-radius: 2px !important;
+    background: #ffffff !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #aicte-noc-sanction-letter * {
+    visibility: visible !important;
+  }
+}

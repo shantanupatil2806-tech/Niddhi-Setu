@@ -6,7 +6,7 @@ const VerificationCase = require('../models/VerificationCase');
 const VerificationFinding = require('../models/VerificationFinding');
 const auth = require('../middleware/auth');
 const { requireRole, requireInstitutionAccess } = require('../middleware/rbac');
-const { uploadSingle } = require('../middleware/upload');
+const { uploadSingle, uploadFdrWithDocs } = require('../middleware/upload');
 const { FDR_STATUS, VERIFICATION_STATUS, ROLES, CASE_STATUS, CASE_PRIORITY } = require('../config/constants');
 const { runComplianceChecks } = require('../services/complianceEngine');
 const { buildLineageChain, validateLineage } = require('../services/lineageService');
@@ -111,7 +111,7 @@ router.get('/', auth, async (req, res, next) => {
  * POST /api/fdrs
  * Submit new FDR instrument with document upload, compliance execution, case and passport generation
  */
-router.post('/', auth, uploadSingle, async (req, res, next) => {
+router.post('/', auth, uploadFdrWithDocs, async (req, res, next) => {
   try {
     let institutionId = req.user.role === ROLES.INSTITUTION ? req.user.institutionId : req.body.institutionId;
     if (institutionId && typeof institutionId === 'object') {
@@ -132,7 +132,10 @@ router.post('/', auth, uploadSingle, async (req, res, next) => {
       issueDate,
       maturityDate,
       depositPeriodMonths,
-      parentFdrId
+      parentFdrId,
+      interestRate,
+      compoundingFrequency,
+      interestPayoutType
     } = req.body;
 
     if (!refNumber || !bankName || !amount || !issueDate || !maturityDate) {
@@ -148,11 +151,31 @@ router.post('/', auth, uploadSingle, async (req, res, next) => {
     let docMimeType = null;
     let docHash = null;
 
-    if (req.file) {
-      docPath = req.file.path;
-      docOriginalName = req.file.originalname;
-      docMimeType = req.file.mimetype;
-      docHash = computeFileHash(req.file.path);
+    const files = req.files || {};
+    const mainFile = req.file || files['document']?.[0] || files['fdr_copy']?.[0];
+
+    if (mainFile) {
+      docPath = mainFile.path;
+      docOriginalName = mainFile.originalname;
+      docMimeType = mainFile.mimetype;
+      docHash = computeFileHash(mainFile.path);
+    }
+
+    // Extract any statutory documents uploaded in Step 3
+    const supportingDocuments = {};
+    const docKeys = ['request_letter', 'affidavit_6', 'payment_proof', 'eoa_loa', 'fdr_copy'];
+    for (const key of docKeys) {
+      const f = files[key]?.[0];
+      if (f) {
+        supportingDocuments[key] = {
+          docType: key,
+          fileUrl: f.path,
+          originalName: f.originalname,
+          fileHash: computeFileHash(f.path),
+          mimeType: f.mimetype,
+          uploadedAt: new Date()
+        };
+      }
     }
 
     // Prepare FDR model instance
@@ -167,12 +190,16 @@ router.post('/', auth, uploadSingle, async (req, res, next) => {
       issueDate: new Date(issueDate),
       maturityDate: new Date(maturityDate),
       depositPeriodMonths: depositPeriodMonths ? Number(depositPeriodMonths) : undefined,
+      interestRate: interestRate !== undefined && interestRate !== '' ? Number(interestRate) : 7.1,
+      compoundingFrequency: compoundingFrequency || 'quarterly',
+      interestPayoutType: interestPayoutType || 'cumulative',
       status: FDR_STATUS.SUBMITTED,
       verificationStatus: VERIFICATION_STATUS.PENDING,
       docPath,
       docOriginalName,
       docHash,
       docMimeType,
+      supportingDocuments,
       parentFdrId: parentFdrId || null,
       metadata: {
         extractedRefNumber: refNumber,

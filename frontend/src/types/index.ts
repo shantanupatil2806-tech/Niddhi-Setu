@@ -7,7 +7,16 @@ export type FDRStatus =
   | 'matured'
   | 'released';
 
-export type UserRole = 'institution' | 'officer' | 'admin';
+export type UserRole =
+  | 'institution'
+  | 'officer'
+  | 'admin'
+  | 'officer_admin'
+  | 'officer_finance'
+  | 'officer_approval'
+  | 'officer_pgrc'
+  | 'officer_vigilance'
+  | 'officer_cell';
 
 export type VerificationSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
@@ -82,6 +91,13 @@ export interface FDR {
   createdAt?: string;
   updatedAt?: string;
   daysToMaturity?: number;
+  depositPeriodMonths?: number;
+  interestRate?: number;
+  compoundingFrequency?: 'quarterly' | 'monthly' | 'half_yearly' | 'annual' | 'simple';
+  interestPayoutType?: 'cumulative' | 'periodic_payout';
+  maturityAmount?: number;
+  accruedInterest?: number;
+  tdsApplicable?: boolean;
 }
 
 export interface VerificationFinding {
@@ -247,6 +263,8 @@ export interface DashboardSummary {
   renewedFdrs: number;
   releasePending: number;
   totalDepositValue: number;
+  totalMaturityValue?: number;
+  totalAccruedInterest?: number;
 }
 
 export interface MaturityTrendItem {

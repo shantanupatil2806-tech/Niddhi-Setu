@@ -8,7 +8,6 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  Image,
   Modal,
   Platform,
 } from 'react-native';
@@ -17,6 +16,13 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../api/client';
+
+type UploadFile = {
+  uri: string;
+  name: string;
+  type: string;
+  size?: number;
+};
 
 export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { user } = useAuth();
@@ -28,14 +34,16 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [amount, setAmount] = useState('5000000');
   const [issueDate, setIssueDate] = useState('2026-11-01');
   const [maturityDate, setMaturityDate] = useState('2031-11-01');
+  const [interestRate, setInterestRate] = useState('7.1');
+  const [compoundingFrequency, setCompoundingFrequency] = useState('quarterly');
+  const [interestPayoutType, setInterestPayoutType] = useState('cumulative');
 
-  // Selected file state
-  const [selectedFile, setSelectedFile] = useState<{
-    uri: string;
-    name: string;
-    type: string;
-    size?: number;
-  } | null>(null);
+  // Statutory 5-Document State
+  const [fdrFile, setFdrFile] = useState<UploadFile | null>(null);
+  const [requestLetterFile, setRequestLetterFile] = useState<UploadFile | null>(null);
+  const [affidavit6File, setAffidavit6File] = useState<UploadFile | null>(null);
+  const [paymentProofFile, setPaymentProofFile] = useState<UploadFile | null>(null);
+  const [eoaLoaFile, setEoaLoaFile] = useState<UploadFile | null>(null);
 
   const [uploading, setUploading] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
@@ -52,7 +60,7 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   ];
 
   // Pick Document (PDF/Doc)
-  const pickDocument = async () => {
+  const pickDoc = async (setter: (file: UploadFile | null) => void) => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/pdf', 'image/*'],
@@ -61,7 +69,7 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
-        setSelectedFile({
+        setter({
           uri: file.uri,
           name: file.name,
           type: file.mimeType || 'application/pdf',
@@ -75,11 +83,11 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   // Capture with Camera
-  const takePhoto = async () => {
+  const capturePhoto = async (setter: (file: UploadFile | null) => void) => {
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Camera Permission', 'Camera permission is required to capture FDR receipts.');
+        Alert.alert('Camera Permission', 'Camera permission is required to capture documents.');
         return;
       }
 
@@ -90,8 +98,8 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const photo = result.assets[0];
-        const fileName = `Receipt_${Date.now()}.jpg`;
-        setSelectedFile({
+        const fileName = `Scan_${Date.now()}.jpg`;
+        setter({
           uri: photo.uri,
           name: fileName,
           type: 'image/jpeg',
@@ -123,8 +131,8 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       Alert.alert('Validation', 'Please specify issuing bank and deposit amount.');
       return;
     }
-    if (!selectedFile) {
-      Alert.alert('Document Required', 'Please capture or attach the FDR deposit certificate file.');
+    if (!fdrFile) {
+      Alert.alert('Document Required', 'Please attach Document 1 (Official FDR Certificate).');
       return;
     }
 
@@ -138,24 +146,37 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       formData.append('amount', amount.trim());
       formData.append('issueDate', issueDate);
       formData.append('maturityDate', maturityDate);
+      formData.append('interestRate', interestRate.trim());
+      formData.append('compoundingFrequency', compoundingFrequency);
+      formData.append('interestPayoutType', interestPayoutType);
 
       const instId = typeof user?.institutionId === 'object'
         ? user.institutionId._id || user.institutionId.id
         : user?.institutionId || 'inst-001';
       formData.append('institutionId', instId);
 
-      // Append file
-      if (Platform.OS === 'web') {
-        const res = await fetch(selectedFile.uri);
-        const blob = await res.blob();
-        formData.append('document', blob, selectedFile.name);
-      } else {
-        formData.append('document', {
-          uri: selectedFile.uri,
-          name: selectedFile.name,
-          type: selectedFile.type,
-        } as any);
-      }
+      const appendFile = async (field: string, file: UploadFile) => {
+        if (Platform.OS === 'web') {
+          const res = await fetch(file.uri);
+          const blob = await res.blob();
+          formData.append(field, blob, file.name);
+        } else {
+          formData.append(field, {
+            uri: file.uri,
+            name: file.name,
+            type: file.type,
+          } as any);
+        }
+      };
+
+      // Primary FDR Document
+      await appendFile('document', fdrFile);
+
+      // Statutory Supporting Documents
+      if (requestLetterFile) await appendFile('request_letter', requestLetterFile);
+      if (affidavit6File) await appendFile('affidavit_6', affidavit6File);
+      if (paymentProofFile) await appendFile('payment_proof', paymentProofFile);
+      if (eoaLoaFile) await appendFile('eoa_loa', eoaLoaFile);
 
       await apiService.submitFDR(formData);
 
@@ -165,7 +186,11 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       // Reset form
       setRefNumber('');
       setBranch('');
-      setSelectedFile(null);
+      setFdrFile(null);
+      setRequestLetterFile(null);
+      setAffidavit6File(null);
+      setPaymentProofFile(null);
+      setEoaLoaFile(null);
     } catch (err: any) {
       console.error('FDR submission error:', err?.response?.data || err.message);
       Alert.alert(
@@ -176,6 +201,60 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       setUploading(false);
     }
   };
+
+  const renderDocCard = (
+    title: string,
+    desc: string,
+    isMandatory: boolean,
+    file: UploadFile | null,
+    setter: (f: UploadFile | null) => void
+  ) => (
+    <View style={styles.docCard}>
+      <View style={styles.docHeaderRow}>
+        <Text style={styles.docCardTitle}>{title}</Text>
+        {isMandatory && (
+          <View style={styles.mandatoryBadge}>
+            <Text style={styles.mandatoryBadgeText}>MANDATORY</Text>
+          </View>
+        )}
+      </View>
+      <Text style={styles.docCardSubtitle}>{desc}</Text>
+
+      {file ? (
+        <View style={styles.fileSelectedBox}>
+          <View style={styles.fileIconBox}>
+            <Ionicons
+              name={file.type.includes('image') ? 'image' : 'document-text'}
+              size={20}
+              color="#0d9488"
+            />
+          </View>
+          <View style={styles.fileDetails}>
+            <Text style={styles.fileName} numberOfLines={1}>
+              {file.name}
+            </Text>
+            <Text style={styles.fileMeta}>
+              {file.size ? `${(file.size / 1024).toFixed(1)} KB • ` : ''}Ready for Upload
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => setter(null)}>
+            <Ionicons name="close-circle" size={22} color="#e11d48" />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.pickButtonsRow}>
+          <TouchableOpacity style={styles.pickBtn} onPress={() => capturePhoto(setter)}>
+            <Ionicons name="camera" size={16} color="#0d9488" />
+            <Text style={styles.pickBtnText}>Camera</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.pickBtn} onPress={() => pickDoc(setter)}>
+            <Ionicons name="document-attach" size={16} color="#0d9488" />
+            <Text style={styles.pickBtnText}>Select File</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
 
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
@@ -191,52 +270,8 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         </View>
         <Text style={styles.title}>Submit Fixed Deposit Receipt</Text>
         <Text style={styles.subtitle}>
-          Upload scanned FDR certificate and register security guarantee with AICTE Council
+          Upload scanned FDR certificate and statutory documents for AICTE custody
         </Text>
-      </View>
-
-      {/* Document Picker Box */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>FDR Document Certificate *</Text>
-        <Text style={styles.cardSubtitle}>
-          Upload bank-stamped deposit receipt (PDF or Photo)
-        </Text>
-
-        {selectedFile ? (
-          <View style={styles.fileSelectedBox}>
-            <View style={styles.fileIconBox}>
-              <Ionicons
-                name={selectedFile.type.includes('image') ? 'image' : 'document-text'}
-                size={24}
-                color="#0d9488"
-              />
-            </View>
-            <View style={styles.fileDetails}>
-              <Text style={styles.fileName} numberOfLines={1}>
-                {selectedFile.name}
-              </Text>
-              <Text style={styles.fileMeta}>
-                {selectedFile.size ? `${(selectedFile.size / 1024).toFixed(1)} KB • ` : ''}
-                Ready for Verification
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => setSelectedFile(null)}>
-              <Ionicons name="close-circle" size={22} color="#e11d48" />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.pickButtonsRow}>
-            <TouchableOpacity style={styles.pickBtn} onPress={takePhoto}>
-              <Ionicons name="camera" size={22} color="#0d9488" />
-              <Text style={styles.pickBtnText}>Scan with Camera</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.pickBtn} onPress={pickDocument}>
-              <Ionicons name="document-attach" size={22} color="#0d9488" />
-              <Text style={styles.pickBtnText}>Select PDF / Image</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
 
       {/* Form Fields Card */}
@@ -330,6 +365,103 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Contracted Interest Rate & Yield Preview */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Annual Interest Rate (% p.a.)</Text>
+          <TextInput
+            style={styles.input}
+            value={interestRate}
+            onChangeText={setInterestRate}
+            placeholder="7.1"
+            placeholderTextColor="#94a3b8"
+            keyboardType="numeric"
+          />
+        </View>
+
+        {(() => {
+          const p = Number(amount) || 0;
+          const r = (Number(interestRate) || 7.1) / 100;
+          const diffMs = Math.max(0, new Date(maturityDate).getTime() - new Date(issueDate).getTime());
+          const t = Math.max(0.5, diffMs / (1000 * 60 * 60 * 24 * 365.25));
+          const maturityEst = Math.round(p * Math.pow(1 + r / 4, 4 * t));
+          const interestEst = Math.max(0, maturityEst - p);
+          return (
+            <View style={{ backgroundColor: '#f0fdfa', borderRadius: 8, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#ccfbf1' }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0f766e', textTransform: 'uppercase' }}>
+                Financial Yield Valuation
+              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+                <Text style={{ fontSize: 12, color: '#334155' }}>Est. Maturity Value:</Text>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: '#0d9488' }}>
+                  ₹ {maturityEst.toLocaleString('en-IN')}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
+                <Text style={{ fontSize: 11, color: '#64748b' }}>Projected Accrued Interest:</Text>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#059669' }}>
+                  +₹ {interestEst.toLocaleString('en-IN')}
+                </Text>
+              </View>
+            </View>
+          );
+        })()}
+      </View>
+
+      {/* UNIFIED STATUTORY DOCUMENTS SECTION (DOCUMENTS 1 TO 5 TOGETHER) */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeaderRow}>
+          <Ionicons name="shield-checkmark" size={18} color="#0d9488" />
+          <Text style={styles.cardTitle}>Mandatory Statutory Documents</Text>
+        </View>
+        <Text style={styles.cardSubtitle}>
+          Upload the 5 mandatory statutory documents prescribed for regulatory scrutiny
+        </Text>
+
+        {/* Doc 1: Official FDR Certificate (Mandatory) */}
+        {renderDocCard(
+          '1. Official FDR Certificate',
+          'Scanned copy of official Fixed Deposit Receipt with AICTE joint-lien endorsement',
+          true,
+          fdrFile,
+          setFdrFile
+        )}
+
+        {/* Doc 2: Institution Request Letter */}
+        {renderDocCard(
+          '2. Institution Request Letter',
+          'Formal application on official institutional letterhead signed by authorized trustee',
+          false,
+          requestLetterFile,
+          setRequestLetterFile
+        )}
+
+        {/* Doc 3: Affidavit 6 */}
+        {renderDocCard(
+          '3. Affidavit 6 (Prescribed Format)',
+          'Sworn affidavit with Trust declarations and indemnity clauses on non-judicial stamp paper',
+          false,
+          affidavit6File,
+          setAffidavit6File
+        )}
+
+        {/* Doc 4: RPGF Payment Proof */}
+        {renderDocCard(
+          '4. RPGF / Security Deposit Payment Proof',
+          'Demand draft copies or electronic payment transaction receipts remitted to AICTE',
+          false,
+          paymentProofFile,
+          setPaymentProofFile
+        )}
+
+        {/* Doc 5: Latest LoA / EoA */}
+        {renderDocCard(
+          '5. Latest Letter of Approval (LoA / EoA)',
+          'Official AICTE approval letter confirming sanctioned intake and program tenure completion',
+          false,
+          eoaLoaFile,
+          setEoaLoaFile
+        )}
+
         {/* Submit Button */}
         <TouchableOpacity
           style={[styles.submitBtn, uploading && styles.submitBtnDisabled]}
@@ -341,7 +473,7 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           ) : (
             <>
               <Ionicons name="checkmark-done" size={20} color="#ffffff" style={{ marginRight: 8 }} />
-              <Text style={styles.submitBtnText}>Submit Deposit to AICTE</Text>
+              <Text style={styles.submitBtnText}>Submit Deposit & Documents to AICTE</Text>
             </>
           )}
         </TouchableOpacity>
@@ -358,8 +490,7 @@ export const UploadScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             </View>
             <Text style={styles.modalTitle}>Deposit Submitted Successfully!</Text>
             <Text style={styles.modalDesc}>
-              Reference <Text style={{ fontWeight: '700', color: '#0f172a' }}>{createdFdrRef}</Text> has
-              been registered in the AICTE deposit repository and queued for officer scrutiny.
+              Reference <Text style={{ fontWeight: '700', color: '#0f172a' }}>{createdFdrRef}</Text> and its statutory documents have been registered in the AICTE deposit repository and queued for officer scrutiny.
             </Text>
             <TouchableOpacity
               style={styles.modalDoneBtn}
@@ -398,26 +529,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0fdfa',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#ccfbf1',
-    gap: 4,
   },
   statusBadgeText: {
-    color: '#0d9488',
     fontSize: 11,
     fontWeight: '700',
+    color: '#0d9488',
+    marginLeft: 4,
   },
   autoFillBtn: {
-    fontSize: 11,
-    color: '#0284c7',
+    fontSize: 12,
     fontWeight: '700',
+    color: '#0d9488',
   },
   title: {
     fontSize: 20,
     fontWeight: '800',
     color: '#0f172a',
-    marginTop: 2,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 12,
@@ -427,85 +558,128 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   cardTitle: {
     fontSize: 14,
     fontWeight: '700',
     color: '#0f172a',
-    marginBottom: 2,
   },
   cardSubtitle: {
     fontSize: 11,
     color: '#64748b',
-    marginBottom: 14,
+    marginTop: 2,
+    marginBottom: 12,
   },
-  pickButtonsRow: {
+  docCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 12,
+  },
+  docHeaderRow: {
     flexDirection: 'row',
-    gap: 10,
-  },
-  pickBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: '#0d9488',
-    backgroundColor: '#f0fdfa',
-    borderRadius: 14,
-    paddingVertical: 18,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
   },
-  pickBtnText: {
-    fontSize: 11,
+  docCardTitle: {
+    fontSize: 12,
     fontWeight: '700',
-    color: '#0d9488',
+    color: '#0f172a',
+  },
+  docCardSubtitle: {
+    fontSize: 10,
+    color: '#64748b',
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  mandatoryBadge: {
+    backgroundColor: '#fff1f2',
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  mandatoryBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#e11d48',
   },
   fileSelectedBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ecfdf5',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: '#a7f3d0',
+    borderRadius: 8,
+    padding: 8,
   },
   fileIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: '#e6fffa',
-    alignItems: 'center',
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#d1fae5',
     justifyContent: 'center',
-    marginRight: 10,
+    alignItems: 'center',
+    marginRight: 8,
   },
   fileDetails: {
     flex: 1,
   },
   fileName: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#0f172a',
+    color: '#065f46',
   },
   fileMeta: {
+    fontSize: 9,
+    color: '#047857',
+    marginTop: 1,
+  },
+  pickButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  pickBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 8,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  pickBtnText: {
     fontSize: 11,
-    color: '#64748b',
-    marginTop: 2,
+    fontWeight: '600',
+    color: '#334155',
   },
   inputGroup: {
     marginBottom: 14,
   },
   inputLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
     color: '#334155',
     marginBottom: 6,
   },
@@ -513,21 +687,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#cbd5e1',
-    borderRadius: 12,
-    height: 44,
+    borderRadius: 10,
     paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 13,
     color: '#0f172a',
   },
   bankChipsRow: {
     marginTop: 8,
+    flexDirection: 'row',
   },
   bankChip: {
-    backgroundColor: '#f1f5f9',
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: 8,
-    marginRight: 6,
+    backgroundColor: '#f1f5f9',
+    marginRight: 8,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -536,28 +711,25 @@ const styles = StyleSheet.create({
     borderColor: '#0d9488',
   },
   bankChipText: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 11,
     color: '#475569',
+    fontWeight: '600',
   },
   bankChipTextActive: {
     color: '#ffffff',
   },
   dateRow: {
     flexDirection: 'row',
+    marginBottom: 6,
   },
   submitBtn: {
     backgroundColor: '#0d9488',
-    borderRadius: 14,
-    height: 48,
+    borderRadius: 12,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    shadowColor: '#0d9488',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 3,
   },
   submitBtnDisabled: {
     opacity: 0.6,
@@ -569,53 +741,53 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 24,
   },
   modalCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     width: '100%',
-    maxWidth: 380,
+    maxWidth: 340,
   },
   modalIconBox: {
     width: 64,
     height: 64,
     borderRadius: 32,
     backgroundColor: '#ecfdf5',
-    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 17,
     fontWeight: '800',
     color: '#0f172a',
     textAlign: 'center',
+    marginBottom: 6,
   },
   modalDesc: {
     fontSize: 12,
     color: '#64748b',
     textAlign: 'center',
-    marginTop: 6,
     lineHeight: 18,
     marginBottom: 20,
   },
   modalDoneBtn: {
     backgroundColor: '#0d9488',
+    borderRadius: 10,
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    paddingHorizontal: 20,
     width: '100%',
     alignItems: 'center',
   },
   modalDoneText: {
     color: '#ffffff',
-    fontWeight: '700',
     fontSize: 13,
+    fontWeight: '700',
   },
 });

@@ -21,6 +21,8 @@ import { ComplianceRadarPage } from './pages/compliance/ComplianceRadarPage';
 import { RenewalCalendarPage } from './pages/calendar/RenewalCalendarPage';
 import { ReleaseRequestsPage } from './pages/release/ReleaseRequestsPage';
 import { ReleaseRequestDetailPage } from './pages/release/ReleaseRequestDetailPage';
+import { ClearanceCommandCenterPage } from './pages/clearance/ClearanceCommandCenterPage';
+import { ClearanceWorkflowDetailPage } from './pages/clearance/ClearanceWorkflowDetailPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
 import { AdminPage } from './pages/admin/AdminPage';
 import { Spinner } from './components/ui';
@@ -115,6 +117,8 @@ export const App: React.FC = () => {
           <Route path="/calendar" element={<RenewalCalendarPage />} />
           <Route path="/release" element={<ReleaseRequestsPage />} />
           <Route path="/release/:id" element={<ReleaseRequestDetailPage />} />
+          <Route path="/clearance" element={<ClearanceCommandCenterPage />} />
+          <Route path="/clearance/:id" element={<ClearanceWorkflowDetailPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route
             path="/admin"

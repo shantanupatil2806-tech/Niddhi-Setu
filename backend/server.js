@@ -24,6 +24,8 @@ const dashboardRoutes = require('./src/routes/dashboard');
 const reportsRoutes = require('./src/routes/reports');
 const complianceRoutes = require('./src/routes/compliance');
 const notificationRoutes = require('./src/routes/notifications');
+const clearanceRoutes = require('./src/routes/clearance');
+const { monitorDeadlinesAndEscalate } = require('./src/services/bottleneckService');
 
 // Model references for scheduled job
 const FDR = require('./src/models/FDR');
@@ -119,6 +121,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/clearance', clearanceRoutes);
 
 // Scheduled Jobs: Daily Maturity Alerts and Status Transitions (Runs daily at 8:00 AM)
 cron.schedule('0 8 * * *', async () => {
@@ -172,6 +175,11 @@ cron.schedule('0 8 * * *', async () => {
     }
 
     console.log(`[Scheduled Job] Scan complete. Flagged: ${approachingFdrs.length}, Auto-matured: ${overdueFdrs.length}.`);
+
+    // 3. Monitor Interdepartmental Clearance SLAs and trigger escalations
+    console.log('[Scheduled Job] Running Clearance Orchestrator SLA Monitoring...');
+    const escalatedAlerts = await monitorDeadlinesAndEscalate();
+    console.log(`[Scheduled Job] Clearance SLA monitoring complete. Alerts created: ${escalatedAlerts.length}.`);
   } catch (error) {
     console.error('[Scheduled Job] Error during maturity scan:', error.message);
   }

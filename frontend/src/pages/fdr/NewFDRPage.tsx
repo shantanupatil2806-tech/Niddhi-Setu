@@ -54,9 +54,16 @@ export const NewFDRPage: React.FC = () => {
   const [issueDate, setIssueDate] = useState('2026-03-01');
   const [maturityDate, setMaturityDate] = useState('2029-03-01');
   const [jointWithAICTE, setJointWithAICTE] = useState(true);
+  const [interestRate, setInterestRate] = useState('7.1');
+  const [compoundingFrequency, setCompoundingFrequency] = useState<'quarterly' | 'monthly' | 'half_yearly' | 'annual' | 'simple'>('quarterly');
+  const [interestPayoutType, setInterestPayoutType] = useState<'cumulative' | 'periodic_payout'>('cumulative');
 
-  // Step 3: Document
-  const [file, setFile] = useState<File | null>(null);
+  // Step 3: Statutory Documents
+  const [file, setFile] = useState<File | null>(null); // FDR Copy
+  const [requestLetterFile, setRequestLetterFile] = useState<File | null>(null);
+  const [affidavit6File, setAffidavit6File] = useState<File | null>(null);
+  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+  const [eoaLoaFile, setEoaLoaFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
   // Load institutions list
@@ -192,10 +199,18 @@ export const NewFDRPage: React.FC = () => {
       formData.append('currency', currency);
       formData.append('issueDate', issueDate);
       formData.append('maturityDate', maturityDate);
+      formData.append('interestRate', interestRate);
+      formData.append('compoundingFrequency', compoundingFrequency);
+      formData.append('interestPayoutType', interestPayoutType);
       formData.append('jointWithAICTE', String(jointWithAICTE));
       if (file) {
         formData.append('document', file);
+        formData.append('fdr_copy', file);
       }
+      if (requestLetterFile) formData.append('request_letter', requestLetterFile);
+      if (affidavit6File) formData.append('affidavit_6', affidavit6File);
+      if (paymentProofFile) formData.append('payment_proof', paymentProofFile);
+      if (eoaLoaFile) formData.append('eoa_loa', eoaLoaFile);
 
       await fdrsApi.createFDR(formData);
       toast.success('FDR submitted successfully into scrutiny ledger!');
@@ -387,6 +402,78 @@ export const NewFDRPage: React.FC = () => {
                 />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Input
+                  label="Contracted Interest Rate (% p.a.)"
+                  type="number"
+                  step="0.05"
+                  placeholder="7.1"
+                  required
+                  value={interestRate}
+                  onChange={(e) => setInterestRate(e.target.value)}
+                />
+                <Select
+                  label="Compounding Frequency"
+                  value={compoundingFrequency}
+                  onChange={(e) => setCompoundingFrequency(e.target.value as any)}
+                >
+                  <option value="quarterly">Quarterly Compounding (RBI Standard)</option>
+                  <option value="monthly">Monthly Compounding</option>
+                  <option value="half_yearly">Half-Yearly</option>
+                  <option value="annual">Annual Compounding</option>
+                  <option value="simple">Simple Interest</option>
+                </Select>
+                <Select
+                  label="Interest Payout Model"
+                  value={interestPayoutType}
+                  onChange={(e) => setInterestPayoutType(e.target.value as any)}
+                >
+                  <option value="cumulative">Cumulative (Reinvestment at Maturity)</option>
+                  <option value="periodic_payout">Periodic Payout to Registered Trust A/c</option>
+                </Select>
+              </div>
+
+              {/* Live Yield & Maturity Preview Card */}
+              {(() => {
+                const previewTenureMonths = Math.max(1, Math.round((new Date(maturityDate).getTime() - new Date(issueDate).getTime()) / (1000 * 60 * 60 * 24 * 30.4375)));
+                const p = Number(amount) || 0;
+                const r = (Number(interestRate) || 7.1) / 100;
+                const t = previewTenureMonths / 12;
+                const n = compoundingFrequency === 'simple' ? 0 : compoundingFrequency === 'monthly' ? 12 : compoundingFrequency === 'half_yearly' ? 2 : compoundingFrequency === 'annual' ? 1 : 4;
+                const previewMaturity = compoundingFrequency === 'simple' ? Math.round(p + p * r * t) : Math.round(p * Math.pow(1 + r / n, n * t));
+                const previewInterest = Math.max(0, previewMaturity - p);
+                const yieldPct = t > 0 ? ((previewInterest / p / t) * 100).toFixed(2) : (r * 100).toFixed(2);
+
+                return (
+                  <div className="rounded-xl border border-teal-200/80 bg-gradient-to-br from-teal-50/60 to-slate-50 p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-teal-800">
+                        Financial Valuation & Statutory Yield Preview
+                      </span>
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-teal-100 font-medium text-teal-800">
+                        {previewTenureMonths} Months ({t.toFixed(1)} Yrs)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                      <div className="bg-white/90 p-2.5 rounded-lg border border-slate-200/70">
+                        <div className="text-[11px] text-slate-500 font-medium">Principal Under Lien</div>
+                        <div className="text-sm font-bold text-slate-900 mt-0.5">{formatCurrency(p)}</div>
+                      </div>
+                      <div className="bg-white/90 p-2.5 rounded-lg border border-slate-200/70">
+                        <div className="text-[11px] text-slate-500 font-medium">Projected Accrued Interest</div>
+                        <div className="text-sm font-bold text-emerald-700 mt-0.5">+{formatCurrency(previewInterest)}</div>
+                        <div className="text-[10px] text-slate-400">Effective Yield: {yieldPct}% p.a.</div>
+                      </div>
+                      <div className="bg-white/90 p-2.5 rounded-lg border border-teal-300/80 bg-teal-50/30">
+                        <div className="text-[11px] text-teal-700 font-semibold">Total Projected Maturity Value</div>
+                        <div className="text-sm font-extrabold text-teal-900 mt-0.5">{formatCurrency(previewMaturity)}</div>
+                        <div className="text-[10px] text-teal-600">Discharged on Maturity</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="pt-2">
                 <label className="flex items-start gap-3 p-3 rounded-lg border border-teal-200 bg-teal-50/50 cursor-pointer">
                   <input
@@ -413,69 +500,251 @@ export const NewFDRPage: React.FC = () => {
         {step === 3 && (
           <>
             <CardHeader
-              title="Step 3: Cryptographic Certificate Upload"
-              subtitle="Upload scanned color copy of FDR certificate (PDF / JPEG / PNG, max 15MB)"
+              title="Step 3: Statutory Documents & Certificate Upload"
+              subtitle="Upload the official FDR certificate and mandatory statutory documents for institutional deposit custody and clearance"
             />
-            <CardContent>
-              <div
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
-                  dragActive
-                    ? 'border-teal-500 bg-teal-50/50'
-                    : file
-                    ? 'border-emerald-400 bg-emerald-50/30'
-                    : 'border-slate-300 hover:border-slate-400 bg-slate-50/40'
-                }`}
-              >
-                {file ? (
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3">
-                      <File className="w-6 h-6" />
-                    </div>
-                    <div className="font-semibold text-slate-900 text-sm">{file.name}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready for Submission
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-4 text-rose-600"
-                      onClick={() => setFile(null)}
-                    >
-                      Remove File
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center mb-3">
-                      <UploadCloud className="w-6 h-6" />
-                    </div>
-                    <div className="font-semibold text-slate-900 text-sm">
-                      Drag and drop the official FDR scan here
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1 mb-4">
-                      or click the button below to browse from your device
-                    </div>
-                    <label>
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            setFile(e.target.files[0]);
-                          }
-                        }}
-                      />
-                      <span className="inline-flex items-center justify-center font-medium rounded-lg text-sm px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white cursor-pointer shadow-xs">
-                        Browse Files
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Doc 1: Official FDR Certificate (Mandatory) */}
+                <div
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+                    dragActive
+                      ? 'border-teal-500 bg-teal-50/50'
+                      : file
+                      ? 'border-emerald-300 bg-emerald-50/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-semibold text-slate-900">
+                        1. Official FDR Certificate
+                      </div>
+                      <span className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full tracking-wide uppercase">
+                        Mandatory
                       </span>
-                    </label>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Scanned copy of official Fixed Deposit Receipt with AICTE joint-lien endorsement
+                    </div>
                   </div>
-                )}
+
+                  <div className="mt-4">
+                    {file ? (
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <File className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="truncate text-emerald-950 font-medium text-xs">{file.name}</span>
+                          <span className="text-[11px] text-slate-500 shrink-0">({(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setFile(null)}
+                          className="text-rose-600 hover:text-rose-700 text-xs font-semibold ml-2 shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block">
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setFile(e.target.files[0]);
+                            }
+                          }}
+                        />
+                        <span className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium py-2.5 cursor-pointer shadow-xs transition-colors">
+                          <UploadCloud className="w-4 h-4" />
+                          Upload FDR Certificate *
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Doc 2: Institution Request Letter */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs flex flex-col justify-between transition-all">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      2. Institution Request Letter
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Formal application on official institutional letterhead signed by authorized trustee
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    {requestLetterFile ? (
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <File className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="truncate text-emerald-950 font-medium text-xs">{requestLetterFile.name}</span>
+                          <span className="text-[11px] text-slate-500 shrink-0">({(requestLetterFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setRequestLetterFile(null)}
+                          className="text-rose-600 hover:text-rose-700 text-xs font-semibold ml-2 shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block">
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={(e) => setRequestLetterFile(e.target.files?.[0] || null)}
+                        />
+                        <span className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium py-2.5 cursor-pointer text-slate-700 shadow-2xs transition-colors">
+                          <UploadCloud className="w-4 h-4 text-slate-500" />
+                          Upload Request Letter
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Doc 3: Affidavit 6 */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs flex flex-col justify-between transition-all">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      3. Affidavit 6 (Prescribed Format)
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Sworn affidavit with Trust declarations and indemnity clauses on non-judicial stamp paper
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    {affidavit6File ? (
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <File className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="truncate text-emerald-950 font-medium text-xs">{affidavit6File.name}</span>
+                          <span className="text-[11px] text-slate-500 shrink-0">({(affidavit6File.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAffidavit6File(null)}
+                          className="text-rose-600 hover:text-rose-700 text-xs font-semibold ml-2 shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block">
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={(e) => setAffidavit6File(e.target.files?.[0] || null)}
+                        />
+                        <span className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium py-2.5 cursor-pointer text-slate-700 shadow-2xs transition-colors">
+                          <UploadCloud className="w-4 h-4 text-slate-500" />
+                          Upload Affidavit 6
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Doc 4: RPGF Payment Proof */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs flex flex-col justify-between transition-all">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      4. RPGF / Security Deposit Payment Proof
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Demand draft copies or electronic payment transaction receipts remitted to AICTE
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    {paymentProofFile ? (
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <File className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="truncate text-emerald-950 font-medium text-xs">{paymentProofFile.name}</span>
+                          <span className="text-[11px] text-slate-500 shrink-0">({(paymentProofFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setPaymentProofFile(null)}
+                          className="text-rose-600 hover:text-rose-700 text-xs font-semibold ml-2 shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block">
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={(e) => setPaymentProofFile(e.target.files?.[0] || null)}
+                        />
+                        <span className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium py-2.5 cursor-pointer text-slate-700 shadow-2xs transition-colors">
+                          <UploadCloud className="w-4 h-4 text-slate-500" />
+                          Upload Payment Proof
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Doc 5: Latest LoA / EoA */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs flex flex-col justify-between transition-all sm:col-span-2">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      5. Latest Letter of Approval (LoA / EoA)
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Official AICTE approval letter confirming sanctioned intake and program tenure completion
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    {eoaLoaFile ? (
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <File className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="truncate text-emerald-950 font-medium text-xs">{eoaLoaFile.name}</span>
+                          <span className="text-[11px] text-slate-500 shrink-0">({(eoaLoaFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEoaLoaFile(null)}
+                          className="text-rose-600 hover:text-rose-700 text-xs font-semibold ml-2 shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block">
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={(e) => setEoaLoaFile(e.target.files?.[0] || null)}
+                        />
+                        <span className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium py-2.5 cursor-pointer text-slate-700 shadow-2xs transition-colors">
+                          <UploadCloud className="w-4 h-4 text-slate-500" />
+                          Upload LoA / EoA
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </>
@@ -521,6 +790,35 @@ export const NewFDRPage: React.FC = () => {
                   <div className="font-semibold text-slate-900 mt-0.5">
                     {formatDate(issueDate)} to {formatDate(maturityDate)}
                   </div>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <span className="text-slate-400 font-semibold uppercase text-[10px]">
+                    Contracted Interest Rate
+                  </span>
+                  <div className="font-bold text-slate-900 mt-0.5">
+                    {interestRate}% p.a. ({compoundingFrequency})
+                  </div>
+                  <div className="text-slate-500 text-[11px] capitalize">{interestPayoutType.replace('_', ' ')}</div>
+                </div>
+
+                <div className="p-3 bg-teal-50/70 border border-teal-200/80 rounded-lg">
+                  <span className="text-teal-700 font-semibold uppercase text-[10px]">
+                    Projected Value on Maturity
+                  </span>
+                  {(() => {
+                    const previewTenureMonths = Math.max(1, Math.round((new Date(maturityDate).getTime() - new Date(issueDate).getTime()) / (1000 * 60 * 60 * 24 * 30.4375)));
+                    const p = Number(amount) || 0;
+                    const r = (Number(interestRate) || 7.1) / 100;
+                    const t = previewTenureMonths / 12;
+                    const n = compoundingFrequency === 'simple' ? 0 : compoundingFrequency === 'monthly' ? 12 : compoundingFrequency === 'half_yearly' ? 2 : compoundingFrequency === 'annual' ? 1 : 4;
+                    const previewMaturity = compoundingFrequency === 'simple' ? Math.round(p + p * r * t) : Math.round(p * Math.pow(1 + r / n, n * t));
+                    return (
+                      <div className="text-base font-extrabold text-teal-900 mt-0.5">
+                        {formatCurrency(previewMaturity)}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
